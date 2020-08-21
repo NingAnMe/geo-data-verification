@@ -13,17 +13,20 @@ from lib.aeronet import Aeronet
 from lib.plot import plot_regression
 from lib.verification import Verification
 
-# aeronet_map_file = r'/home/kts_project_v1/qiuh/mod_aod/site_info.csv'
 aeronet_map_file = r'site_info.csv'
+fy3d_aod_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aod/Granule'  # gongsi
+aeronet_aod_dir = r'/DATA/PROJECT/SourceData/Aeronet/AOD/AOD20/ALL_POINTS'  # gongsi
+fy3d_aeronet_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aeronet'
+fy3d_aeronet_image_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aeronet_image'
+
+
 # fy3d_aod_dir = r'/nas02/cma/AEROSOL_1.0/SupportData/FY3D_MERSI/Granule'
-# fy3d_aod_dir = r'/home/kts_project_v1/qiuh/mod_cpp/fy3d_aod'
-fy3d_aod_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI/Granule/Granule'
+# fy3d_aod_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI/Granule/Granule'
 # fy3d_aod_file = r'/home/kts_project_v1/qiuh/mod_cpp/fy3d_aod/FY3D_MERSI_AOD_GRANULE_20190228_0000.HDF5'
-# aeronet_aod_dir = r'/DATA/PROJECT/SourceData/Aeronet/AOD/AOD20/ALL_POINTS'
-aeronet_aod_dir = r'/RED1BDATA/cma/SourceData/Aeronet/AOD/AOD20/ALL_POINTS'
+# aeronet_aod_dir = r'/RED1BDATA/cma/SourceData/Aeronet/AOD/AOD20/ALL_POINTS'  # liujian
 # fy3d_aeronet_dir = r'/home/kts_project_v1/qiuh/mod_cpp/fy3d_aeronet'
-fy3d_aeronet_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI_AERONET'
-fy3d_aeronet_image_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI_AERONET_IMAGE'
+# fy3d_aeronet_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI_AERONET'
+# fy3d_aeronet_image_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI_AERONET_IMAGE'
 
 
 def print_info(data):
@@ -84,7 +87,7 @@ def verification(fy3d_aod_file, aeronet_map, aeronet_file_dir):
     # 循环匹配到的站点，找到时间最接近的点
     station_name = result['name']
     #   时间阈值
-    pre_dts = pd.Timedelta('12:00:00')
+    pre_dts = pd.Timedelta('00:30:00')
     dt2 = list()
     aod2 = list()
     for name in station_name:
@@ -141,4 +144,5 @@ def main_day():
 
 
 if __name__ == '__main__':
-    main_day()
+    # main_day()
+    main_month()

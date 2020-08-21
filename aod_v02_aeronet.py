@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 from lib.aeronet import Aeronet
 
-
 data_path = '/DATA/PROJECT/SourceData/Aeronet/AOD/AOD20/ALL_POINTS'
 all_site_pkl = 'all_site.pkl'
 filter_site_pkl = 'filter_site.pkl'
@@ -71,7 +70,7 @@ def station_datetime_start_end():
             site_info_out["dt_s"].append(v[2])
             site_info_out["dt_e"].append(v[3])
         site_info_out = pd.DataFrame(site_info_out)
-        site_info_out.to_csv("site_info.csv")
+        site_info_out.to_csv("site_info_lev15.csv")
 
 
 def __get_site_info():
@@ -85,21 +84,21 @@ def plot_site_map():
     print(site_info)
     lons = list()
     lats = list()
-    for lon, lat in site_info.values():
+    for lon, lat, _, _ in site_info.values():
         lons.append(lon)
         lats.append(lat)
 
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.stock_img()
 
-    plt.plot(lons, lats,
-             color='blue', marker='o',
-             transform=ccrs.PlateCarree(),
-             )
-    plt.savefig('test.png')
+    plt.scatter(lons, lats,
+                color='blue', marker='.',
+                transform=ccrs.PlateCarree(),
+                )
+    plt.savefig('site_map.png')
 
 
 if __name__ == '__main__':
     # aeronet_site_info()
-    # plot_site_map()
+    plot_site_map()
     station_datetime_start_end()

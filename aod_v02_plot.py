@@ -11,8 +11,8 @@ from scipy import stats
 
 from lib.plot import plot_regression
 
-fy3d_aeronet_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI_AERONET'
-fy3d_aeronet_image_dir = r'/RED1BDATA/cma/AEROSOL_1.0/SupportData/FY3D_MERSI_AERONET_IMAGE'
+fy3d_aeronet_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aeronet'
+fy3d_aeronet_image_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aeronet_image'
 
 
 def plot_aod_regression(ymd):
