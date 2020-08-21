@@ -9,6 +9,10 @@ AERONET_Site_Name,Site_Latitude(Degrees),Site_Longitude(Degrees)
 from datetime import datetime
 
 
+def get_aod_550nm(aod_675, angstrom_440_675):
+    return aod_675 * ((550 / 675) ** (-1 * angstrom_440_675))
+
+
 class Aeronet:
     def __init__(self, in_file):
         self.site_file = in_file
@@ -37,5 +41,4 @@ class Aeronet:
         return dts
 
     def get_aod550(self):
-        aod550 = self.datas['AOD_500nm']
-        return aod550
+        return get_aod_550nm(self.datas['AOD_675nm'], self.datas['440-675_Angstrom_Exponent'])
