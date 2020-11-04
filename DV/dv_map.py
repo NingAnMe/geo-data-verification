@@ -7,7 +7,8 @@ Created on 2016年3月16日
 import os
 import numpy as np
 import matplotlib as mpl
-
+import os
+os.environ['PROJ_LIB'] = '/opt/KTS_LIB/miniconda3/share/proj'
 mpl.use('Agg')
 from DV.dv_plt import dv_base, str_len, EDGE_LW, colormap_blue2red, COLOR_Darkgray, \
     get_DV_Font, add_colorbar_horizontal, add_sub_ax
@@ -20,7 +21,7 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 import shapefile
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from DV.dv_img import linearStretch, norm255
-# from DP.dp_prj import prj_gll, fill_points_2d
+# from dp_prj import prj_gll, fill_points_2d
 from importlib.resources import path
 
 from mpl_toolkits.basemap import Basemap
@@ -243,7 +244,7 @@ class dv_map(dv_base):
            [(0, '#0000ff'), (0.333, '#00ffff'), (0.667, '#ffff00'), (1, '#ff0000')]
         '''
         self.colormap = colors.LinearSegmentedColormap.from_list('dummy', color_list)
-        self.valmin = vmin;
+        self.valmin = vmin
         self.valmax = vmax
         self.norm = mpl.colors.Normalize(vmin=self.valmin, vmax=self.valmax)
         if step > 0:
@@ -353,11 +354,20 @@ class dv_map(dv_base):
         #         import pickle
         #         pickle.dump(self.m, open('china.pkl', 'wb'))
 
+        if values is not None:
+            if self.valmin is None:
+                self.valmin = np.nanmin(values)
+            if self.valmax is None:
+                self.valmax = np.nanmax(values)
         # value min max
         if vmin is None:
             vmin = self.valmin
+        else:
+            self.valmin = vmin
         if vmax is None:
             vmax = self.valmax
+        else:
+            self.valmax = vmax
 
         # ## Drawing
         self.drawOnMap(lats, lons, values, vmin, vmax, colormap, ptype, alpha)
@@ -436,9 +446,10 @@ class dv_map(dv_base):
             if len(self.areaNameLst) > 0:
                 sf = shapefile.Reader(str(selfPath / u'SHP/中国省级行政区'), encoding="gbk")
                 for shape_rec in sf.shapeRecords():
-                    strName = shape_rec.record[0].decode('gbk')  # todo: need decode ??
+                    strName = shape_rec.record[0]
                     for eachArea in self.areaNameLst:
                         if eachArea in strName:
+                            # print(eachArea)
                             pts = shape_rec.shape.points
                             prt = list(shape_rec.shape.parts) + [len(pts)]
                             for i in range(len(prt) - 1):
@@ -659,10 +670,10 @@ class dv_map(dv_base):
         for eachspine in ax2.spines:
             spines[eachspine].set_linewidth(EDGE_LW * 0.9)
 
-    def counties_boundary(self, name,
-                          drawbounds=True, zorder=None,
-                          linewidth=0.5, color='k',
-                          default_encoding='utf-8'):
+    def city_boundary(self, name,
+                      drawbounds=True, zorder=None,
+                      linewidth=0.5, color='k',
+                      default_encoding='utf-8'):
         """
         Read in shape file, optionally draw boundaries on map.
 
@@ -946,8 +957,8 @@ class dv_map(dv_base):
                 yplus = 3
 
         xpt, ypt = self.m(lon, lat)
-        #         circle1 = mpl.patches.Star.Circle((xpt, ypt), 6, color=RED, ec=EDGE_GRAY, lw=0.3)
-        self.m.scatter(xpt, ypt, marker=marker, s=markersize, color=color, edgecolors=edgecolors, lw=0.1, zorder=10)
+        if marker not in ["", None]:
+            self.m.scatter(xpt, ypt, marker=marker, s=markersize, color=color, edgecolors=edgecolors, lw=0.1, zorder=10)
 
         font = self.font_mid
         if self.projection == "cyl":
@@ -1061,13 +1072,13 @@ class dv_map(dv_base):
                             fontproperties=self.font_leg, fontsize=self.fontsize_label, loc="left")
         cb.outline.set_linewidth(EDGE_LW)
 
-    def setArea(self, shengName):
+    def set_area(self, shengName):
         '''
         设定显示的区域
         shpName   shape文件名
         areaNameLst  地区名，shape文件中包含的地区
         '''
-        if type(shengName).__name__ == "unicode":
+        if type(shengName).__name__ == "str":
             self.areaNameLst.append(shengName)
         elif type(shengName).__name__ == "list":
             self.areaNameLst = self.areaNameLst + shengName
@@ -1242,7 +1253,7 @@ if __name__ == '__main__':
 
     # 全球-----------------------
 
-    lats, lons = np.mgrid[70:0:-6, 50: 150: 6]
+    lats, lons = np.mgrid[70:0:-2, 50: 150: 2]
     values = np.random.randint(0., 10000. + 1, lats.shape)
     #     values = np.ma.masked_all_like(lats)
     #     box = [30, -30, 60, 120]
@@ -1264,135 +1275,137 @@ if __name__ == '__main__':
     # 全球 ---------------------
     from DV.dv_plt import add_ax
 
-    fig = plt.figure(figsize=(11, 6))
-    #     pos1 = [0.05, 0.06, 0.9, 0.85]
-    #     ax1 = add_ax(fig, *pos1)
-    #     p = dv_map(fig, ax=ax1)
-    p = dv_map(fig)
+    # fig = plt.figure(figsize=(11, 6))
+    # #     pos1 = [0.05, 0.06, 0.9, 0.85]
+    # #     ax1 = add_ax(fig, *pos1)
+    # #     p = dv_map(fig, ax=ax1)
+    # p = dv_map(fig)
+    # #     p.show_colorbar = False
+    # p.colormap = colormap_no2()
+    # p.colorbar_fmt = "%d"
+    # p.show_line_of_latlon = False
+    # p.show_countries = False
+    # # p.colorbar_bounds = range(0, 10001, 1000)
+    # p.valmax = np.max(values)
+    # p.valmin = np.min(values)
+    # p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
+    # p.title = u'全球分布图'
+    # # 在北京的位置画颗星星
+    # lon, lat, location = np.array([116.30]), np.array([40.03]), np.array([u"北京"])
+    # p.add_landmark(lon, lat, location)
+    #
+    # lats = [-30, 30, 30, -30]
+    # lons = [-50, -50, 50, 50]
+    # x, y = p.m(lons, lats)
+    # xy = list(zip(x, y))
+    # xy = [(113.7, 26.1), (113.7, 35.9), (126.2, 35.9), (126.2, 26.1)]
+    # from matplotlib.patches import Polygon
+    #
+    # poly = Polygon(xy, linestyle="--", edgecolor='k', facecolor='None', linewidth=0.5, alpha=0.7)
+    # p.ax.add_patch(poly)
+    #
+    # p.draw()
+    # strlist = [['2.0322x-0.6106', 'count:2168'], ['a = 0.9', 'b = 0', 'num = 10'], ['a = 0.9', 'b = 0', 'num = 10']]
+    # p.annotate(strlist, color='m', fontsize=12)
+    # p.savefig('glb.png')
+
+    #     # 东半球中国 --------------------------
+    #     p = dv_map(figsize=(5.4, 5.8), theme="dark")
+    #     p.show_countries = False
+    #     p.easyplot(None, None, values, box=[33, 108], ptype='pcolormesh', vmin=0, vmax=1)
     #     p.show_colorbar = False
-    p.colormap = colormap_no2()
+    #     add_colorbar_below(p.fig, 0.26, 0.74, 0.05, 0, 100)
+    #     p.fig.subplots_adjust(left=0.03, right=1. - 0.03, top=0.93, bottom=0.1)
+    #     p.suptitle(u'Average Aerosol Optical Depth from 15 Nov. 2016 to 31 Jan. 2017', fontsize=12)
+    #     p.savefig('easthalf.png')
+
+    #     # 中国 -----------------------
+    #     p = dv_map(theme="dark")
+    #     p.colorbar_fmt = "%d"
+    #     p.show_countries = False
+    #     p.show_china = True
+    #     p.show_inside_china = True
+    #     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
+    #     p.colorbar_unit = u"（单位：ppm）"
+    #
+    #     p.suptitle(u"美国OCO卫星监测大气二氧化碳年平均浓度分布图")
+    #     p.title_left(u'中国陆地区域')
+    #     p.title_right(u'2017年')
+    #
+    #     # 标出地理位置
+    #     lonlatlocation = [(117.117, 40.65, u"上甸子站"), (100.9, 36.283, u"瓦里关站"),
+    #                       (127.6, 44.733, u"龙凤山站"), (119.733, 30.3, u"临安站"),
+    #                       (99.733, 28.017, u"香格里拉站"), (114.2, 29.633, u"金沙站"),
+    #                       (87.967, 47.1, u"阿克达拉站")]
+    #     p.add_landmark(lonlatlocation, marker=".")
+    #
+    #     p.savefig('china.png')
+
+    #     # 北半球 -------------------------------
+    #     p = dv_map(theme="dark")
+    #     p.colorbar_fmt = "%d"
+    #     p.show_north = True
+    #     p.colorbar_unit = "unit:(m)"
+    #     p.colorbar_extend = "both"
+    #     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
+    #     p.title = u'北极地区分布图'
+    #     p.savefig('north.png')
+
+    #     # 北极 ----------------------------------
+    #     p = dv_map(theme="dark")
+    #     p.colorbar_fmt = "%d"
+    #     p.show_north_pole = True
+    #     p.colorbar_unit = "unit:(m)"
+    #     p.colorbar_extend = "both"
+    #     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
+    #     p.title = u'北极地区分布图'
+    #     p.savefig('npole.png')
+
+    #     # 南极 --------------------------------
+    #     p = dv_map(theme="dark")
+    #     p.colorbar_fmt = "%d"
+    #     p.show_south_pole = True
+    #     p.colorbar_unit = "unit:(m)"
+    #     p.colorbar_extend = "both"
+    #     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
+    #     p.title = u'南极地区分布图'
+    #     p.savefig('spole.png')
+
+    # 北京
+    p = dv_map(figsize=(6.6, 6.), theme="dark")
     p.colorbar_fmt = "%d"
-    p.show_line_of_latlon = False
+    p.show_coastlines = False
     p.show_countries = False
+    p.show_china_province = True
+    p.show_line_of_latlon = True
+    p.set_area(["北京市", "天津市"])
+    p.projection = "aea"
+    p.delat = 1
+    p.delon = 2
+    p.lw_boundray = 0.54
+    p.colorbar_bounds = range(0, 10001, 1000)
+    p.easyplot(lats, lons, values, box=[41.5, 38.5, 113.9, 118.9], ptype='contourf', vmin=0, vmax=10000)
+    p.city_boundary("天津市")
+    p.title = u'北京区域分布图'
+    p.savefig('beijing.png')
+
+    # # 赣州
+    # p = dv_map(figsize=(6.6, 6.))
+    # box = [28, 24, 113, 117]
+    # p.colorbar_fmt = "%d"
+    # p.show_coastlines = False
+    # p.show_countries = False
+    # p.show_line_of_latlon = True
+    # p.delat = 1
+    # p.delon = 2
+    # p.valmin = 0
+    # p.valmax = 10000
+    # p.lw_boundray = 0.54
     # p.colorbar_bounds = range(0, 10001, 1000)
-    p.valmax = np.max(values)
-    p.valmin = np.min(values)
-    p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
-    p.title = u'全球分布图'
-    # 在北京的位置画颗星星
-    lon, lat, location = np.array([116.30]), np.array([40.03]), np.array([u"北京"])
-    p.add_landmark(lon, lat, location)
-
-    lats = [-30, 30, 30, -30]
-    lons = [-50, -50, 50, 50]
-    x, y = p.m(lons, lats)
-    xy = list(zip(x, y))
-    xy = [(113.7, 26.1), (113.7, 35.9), (126.2, 35.9), (126.2, 26.1)]
-    from matplotlib.patches import Polygon
-
-    poly = Polygon(xy, linestyle="--", edgecolor='k', facecolor='None', linewidth=0.5, alpha=0.7)
-    p.ax.add_patch(poly)
-
-    p.draw()
-    strlist = [['2.0322x-0.6106', 'count:2168'], ['a = 0.9', 'b = 0', 'num = 10'], ['a = 0.9', 'b = 0', 'num = 10']]
-    p.annotate(strlist, color='m', fontsize=12)
-    p.savefig('glb.png')
-
-#     # 东半球中国 --------------------------
-#     p = dv_map(figsize=(5.4, 5.8), theme="dark")
-#     p.show_countries = False
-#     p.easyplot(None, None, values, box=[33, 108], ptype='pcolormesh', vmin=0, vmax=1)
-#     p.show_colorbar = False
-#     add_colorbar_below(p.fig, 0.26, 0.74, 0.05, 0, 100)
-#     p.fig.subplots_adjust(left=0.03, right=1. - 0.03, top=0.93, bottom=0.1)
-#     p.suptitle(u'Average Aerosol Optical Depth from 15 Nov. 2016 to 31 Jan. 2017', fontsize=12)
-#     p.savefig('easthalf.png')
-
-#     # 中国 -----------------------
-#     p = dv_map(theme="dark")
-#     p.colorbar_fmt = "%d"
-#     p.show_countries = False
-#     p.show_china = True
-#     p.show_inside_china = True
-#     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
-#     p.colorbar_unit = u"（单位：ppm）"
-#
-#     p.suptitle(u"美国OCO卫星监测大气二氧化碳年平均浓度分布图")
-#     p.title_left(u'中国陆地区域')
-#     p.title_right(u'2017年')
-#
-#     # 标出地理位置
-#     lonlatlocation = [(117.117, 40.65, u"上甸子站"), (100.9, 36.283, u"瓦里关站"),
-#                       (127.6, 44.733, u"龙凤山站"), (119.733, 30.3, u"临安站"),
-#                       (99.733, 28.017, u"香格里拉站"), (114.2, 29.633, u"金沙站"),
-#                       (87.967, 47.1, u"阿克达拉站")]
-#     p.add_landmark(lonlatlocation, marker=".")
-#
-#     p.savefig('china.png')
-
-#     # 北半球 -------------------------------
-#     p = dv_map(theme="dark")
-#     p.colorbar_fmt = "%d"
-#     p.show_north = True
-#     p.colorbar_unit = "unit:(m)"
-#     p.colorbar_extend = "both"
-#     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
-#     p.title = u'北极地区分布图'
-#     p.savefig('north.png')
-
-#     # 北极 ----------------------------------
-#     p = dv_map(theme="dark")
-#     p.colorbar_fmt = "%d"
-#     p.show_north_pole = True
-#     p.colorbar_unit = "unit:(m)"
-#     p.colorbar_extend = "both"
-#     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
-#     p.title = u'北极地区分布图'
-#     p.savefig('npole.png')
-
-#     # 南极 --------------------------------
-#     p = dv_map(theme="dark")
-#     p.colorbar_fmt = "%d"
-#     p.show_south_pole = True
-#     p.colorbar_unit = "unit:(m)"
-#     p.colorbar_extend = "both"
-#     p.easyplot(lats, lons, values, ptype='contourf', vmin=0, vmax=10000)
-#     p.title = u'南极地区分布图'
-#     p.savefig('spole.png')
-
-#     # 北京
-#     p = dv_map(figsize=(6.6, 6.), theme="dark")
-#     p.colorbar_fmt = "%d"
-#     p.show_coastlines = False
-#     p.show_countries = False
-#     p.show_china_province = True
-#     p.show_line_of_latlon = True
-#     p.setArea(u"北京市")
-#     p.projection = "aea"
-#     p.delat = 1
-#     p.delon = 2
-#     p.lw_boundray = 0.54
-#     p.colorbar_bounds = range(0, 10001, 1000)
-#     p.easyplot(lats, lons, values, box=[41.5, 38.5, 113.9, 118.9], ptype='contourf', vmin=0, vmax=10000)
-#     p.title = u'北京区域分布图'
-#     p.savefig('beijing.png')
-
-#     # 赣州
-#     p = dv_map(figsize=(6.6, 6.))
-#     box = [28, 24, 113, 117]
-#     p.colorbar_fmt = "%d"
-#     p.show_coastlines = False
-#     p.show_countries = False
-#     p.show_line_of_latlon = True
-#     p.delat = 1
-#     p.delon = 2
-#     p.lw_boundray = 0.54
-#     p.colorbar_bounds = range(0, 10001, 1000)
-#     p.easyplot(lats, lons, values, box=box, ptype='pcolormesh', vmin=0, vmax=10000)
-#     p.counties_boundary(u"赣县")
-#     p.counties_boundary(u"宁都县")
-#     lonlatlocation = [(115.27, 25.81, u"赣州市")]
-#     p.add_landmark(lonlatlocation, marker="", yplus=0)
-#
-#     p.title = u'区域分布图'
-#     p.savefig('ganzhou.png')
+    # p.easyplot(lats, lons, values, box=box, ptype='pcolormesh', vmin=0, vmax=10000)
+    # p.city_boundary("赣县")
+    # p.city_boundary("宁都县")
+    # p.add_landmark(115.27, 25.81, u"赣州市", marker="")
+    #
+    # p.title = u'区域分布图'
+    # p.savefig('ganzhou.png')
