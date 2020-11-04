@@ -9,13 +9,26 @@ import pandas as pd
 import numpy as np
 
 from lib.cpp import CppFy3c, CppModis
-from lib.plot import plot_regression
+from lib.plot_stats import plot_regression
 from lib.verification import Verification
 
-fy3c_cpp_file = os.path.join('test', 'fy3c_cpp', 'FY3C_VIRRD_ORBT_L2_CPP_MLT_NUL_20200104_0000_1000M_MS.HDF')
-fy3c_geo_file = os.path.join('test', 'fy3c_cpp', 'FY3C_VIRRX_GBAL_L1_20200104_0000_GEOXX_MS.HDF')
+# 单数据测试
+fy3c_cpp_file = os.path.join('test', 'fy3c_cpp', 'FY3C_VIRRD_ORBT_L2_CPP_MLT_NUL_20200330_0820_1000M_MS.HDF')  # 本地测试路径
+fy3c_geo_file = os.path.join('test', 'fy3c_geo', 'FY3C_VIRRX_GBAL_L1_20200330_0820_GEOXX_MS.HDF')  # 本地测试路径
+modis_cpp_file = os.path.join('test', 'modis_cpp', 'MOD06_L2.A2020090.0830.061.2020091134740.hdf')  # 本地测试路径
 
-modis_cpp_file = os.path.join('test', 'modis_cpp', 'MOD06_L2.A2020004.0755.061.2020004193547.hdf')
+
+# 批量测试
+fy3c_cpp_dir = r'test/fy3c_cpp'  # 本地测试路径
+fy3c_geo_dir = 'test/fy3c_geo'  # 本地测试路径
+modis_cpp_dir = 'test/modis_cpp'  # 本地测试路径
+result_dir = 'test/result'  # 本地测试路径
+
+# 服务器路径
+# fy3c_cpp_dir = '/home/kts_project_v1/qiuh/mod_cpp/20200104/20200104'
+# fy3c_geo_dir = '/DISK/DATA02/PROJECT/SourceData/FENGYUN-3C/VIRR/L1/ORBIT/20200104'
+# modis_cpp_dir = '/home/kts_project_v1/qiuh/mod_cpp/modis_cpp_20200104/MOD06_L2/2020/004'
+# result_dir = '/home/kts_project_v1/qiuh/mod_cpp/result/20200104'
 
 
 def print_info(data):
@@ -26,7 +39,7 @@ def save_result(result, out_file):
     r = pd.DataFrame(result)
     r = r.dropna(axis=0)
     if len(r) > 0:
-        r.to_hdf(out_file, key='result')
+        r.to_csv(out_file)
 
 
 def verification(fy3c_cpp_file, fy3c_geo_file, modis_cpp_file):
@@ -71,17 +84,7 @@ def verification(fy3c_cpp_file, fy3c_geo_file, modis_cpp_file):
         return
 
 
-# fy3c_cpp_dir = '/home/kts_project_v1/qiuh/mod_cpp/20200104/20200104'
-# fy3c_geo_dir = '/DISK/DATA02/PROJECT/SourceData/FENGYUN-3C/VIRR/L1/ORBIT/20200104'
-# modis_cpp_dir = '/home/kts_project_v1/qiuh/mod_cpp/modis_cpp_20200104/MOD06_L2/2020/004'
-# result_dir = '/home/kts_project_v1/qiuh/mod_cpp/result/20200104'
-fy3c_cpp_dir = r'test/fy3c_cpp'
-fy3c_geo_dir = 'test/fy3c_geo'
-modis_cpp_dir = 'test/modis_cpp'
-result_dir = 'test/result'
-
-
-def main():
+def multi_verification():
     fy3c_cpp_filenames = os.listdir(fy3c_cpp_dir)
     fy3c_cpp_filenames = [i for i in fy3c_cpp_filenames if i[-3:] == 'HDF']
 
@@ -108,8 +111,8 @@ def main():
                 # print(fy3c_cpp_filename, modis_cpp_filename)
                 pairs.append((cpp_file1, geo_file1, cpp_file2, result_file))
     # print(pairs)
-    print(len(pairs))
-    pairs.sort()
+    # print(len(pairs))
+    # pairs.sort()
     for fy3c_cpp_file, fy3c_geo_file, modis_cpp_file, result_file in pairs:
         result = verification(fy3c_cpp_file, fy3c_geo_file, modis_cpp_file)
         if result is not None:
@@ -121,7 +124,7 @@ def plot_cpp_regression():
     result_files = os.listdir(result_dir)
     for filename in result_files:
         result_file = os.path.join(result_dir, filename)
-        result_data = pd.read_hdf(result_file)
+        result_data = pd.read_csv(result_file)
         result_data = pd.DataFrame(result_data)
         print(type(result_data))
         print(result_data.head())
@@ -136,8 +139,6 @@ def plot_cpp_regression():
         y_label = 'TERRA+MODIS (K)'
         x_range = [30, 170]
         y_range = [30, 170]
-        x_interval = 20
-        y_interval = 20
         out_file = os.path.join('test', 'pictrue', filename+'.PNG')
         plot_regression(
             x=result_data['tmp_s1'].to_numpy(),
@@ -148,8 +149,6 @@ def plot_cpp_regression():
             y_label=y_label,
             x_range=x_range,
             y_range=y_range,
-            x_interval=x_interval,
-            y_interval=y_interval,
         )
 
 
@@ -157,7 +156,7 @@ def plot_delta_regression():
     result_files = os.listdir(result_dir)
     for filename in result_files:
         result_file = os.path.join(result_dir, filename)
-        result_data = pd.read_hdf(result_file)
+        result_data = pd.read_csv(result_file)
         result_data = pd.DataFrame(result_data)
         print(type(result_data))
         print(result_data.head())
@@ -172,8 +171,6 @@ def plot_delta_regression():
         y_label = 'MODIS-VIRR (K)'
         x_range = [30, 170]
         y_range = [-30, 30]
-        x_interval = 20
-        y_interval = 10
         out_file = os.path.join('test', 'pictrue', filename+'_Delta.PNG')
         x = result_data['tmp_s1'].to_numpy()
         y = x - result_data['tmp_s2'].to_numpy()
@@ -186,8 +183,6 @@ def plot_delta_regression():
             y_label=y_label,
             x_range=x_range,
             y_range=y_range,
-            x_interval=x_interval,
-            y_interval=y_interval,
         )
 
 
@@ -195,7 +190,7 @@ def cal_mean_rate():
     result_files = os.listdir(result_dir)
     for filename in result_files:
         result_file = os.path.join(result_dir, filename)
-        result_data = pd.read_hdf(result_file)
+        result_data = pd.read_csv(result_file)
         result_data = pd.DataFrame(result_data)
         print(type(result_data))
         print(result_data.head())
@@ -214,8 +209,8 @@ def cal_mean_rate():
 
 
 if __name__ == '__main__':
-    # verification(fy3c_cpp_file, fy3c_geo_file, modis_cpp_file)
-    # main()
-    plot_cpp_regression()
-    plot_delta_regression()
-    cal_mean_rate()
+    verification(fy3c_cpp_file, fy3c_geo_file, modis_cpp_file)  # 单个数据的匹配接口
+    multi_verification()  # 批量匹配的接口
+    plot_cpp_regression()  # 绘制回归图
+    plot_delta_regression()  # 绘制偏差图
+    cal_mean_rate()  # 计算平均偏差率

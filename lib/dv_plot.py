@@ -282,7 +282,7 @@ class PlotAx(object):
 
         j = 0
         xx = []  # 一行的x值
-        for i in xrange(x_size):  # 补充缺失数据的天
+        for i in range(x_size):  # 补充缺失数据的天
             date_i = date_start + relativedelta(days=i)
             xx.append(date_i)
             if j < len(data_x) and data_x[j] == date_i:

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from lib.plot import plot_regression
+from lib.plot_stats import plot_regression
 
 fy3d_aeronet_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aeronet'
 fy3d_aeronet_image_dir = r'/home/kts_project_v1/qiuh/mod_aod/fy3d_aeronet_image'
@@ -101,7 +101,8 @@ def plot_aod_regression_month(ym):
     x = x[index]
     y = y[index]
     slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-    print(slope, intercept, r_value, r_value ** 2, p_value, std_err)
+    count = len(x)
+    print(slope, intercept, r_value, r_value ** 2, p_value, std_err, count)
     plot_regression(
         x=x,
         y=y,

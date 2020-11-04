@@ -10,7 +10,7 @@ from scipy import stats
 
 from lib.aod import AodFy3d
 from lib.aeronet import Aeronet
-from lib.plot import plot_regression
+from lib.plot_stats import plot_regression
 from lib.verification import Verification
 
 aeronet_map_file = r'site_info.csv'

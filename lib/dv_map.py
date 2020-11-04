@@ -356,19 +356,20 @@ class dv_map(dv_base):
                     codes += [Path.LINETO] * (prt[i + 1] - prt[i] - 2)
                     codes += [Path.CLOSEPOLY]
 
-        sf = shapefile.Reader(os.path.join(selfPath, u'SHP/中国省级行政区'))
-        for shape_rec in sf.shapeRecords():
-            strName = shape_rec.record[0].decode('gbk')
-            for eachArea in self.areaNameLst:
-                if eachArea in strName:
-                    pts = shape_rec.shape.points
-                    prt = list(shape_rec.shape.parts) + [len(pts)]
-                    for i in range(len(prt) - 1):
-                        for j in range(prt[i], prt[i + 1]):
-                            vertices.append(m(pts[j][0], pts[j][1]))
-                        codes += [Path.MOVETO]
-                        codes += [Path.LINETO] * (prt[i + 1] - prt[i] - 2)
-                        codes += [Path.CLOSEPOLY]
+        # TODO ## 报错，暂时去除
+        # sf = shapefile.Reader(os.path.join(selfPath, u'SHP/中国省级行政区'))
+        # for shape_rec in sf.shapeRecords():
+        #     strName = shape_rec.record[0].decode('gbk')
+        #     for eachArea in self.areaNameLst:
+        #         if eachArea in strName:
+        #             pts = shape_rec.shape.points
+        #             prt = list(shape_rec.shape.parts) + [len(pts)]
+        #             for i in range(len(prt) - 1):
+        #                 for j in range(prt[i], prt[i + 1]):
+        #                     vertices.append(m(pts[j][0], pts[j][1]))
+        #                 codes += [Path.MOVETO]
+        #                 codes += [Path.LINETO] * (prt[i + 1] - prt[i] - 2)
+        #                 codes += [Path.CLOSEPOLY]
 
         ax = plt.gca()  # current ax is not main ax
         if len(codes) > 0:

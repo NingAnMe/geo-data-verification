@@ -128,6 +128,9 @@ dmypy.json
 .pyre/
 
 .idea/
+test/
+no2_plot.py
+tmp_a01_create_link.py
 
 aid/AHI8_OBI_2000M_NOM_20200310_1210.hdf
 aid/fygatNAV.Himawari08.xxxxxxx.2000.hdf4

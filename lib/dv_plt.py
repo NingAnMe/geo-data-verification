@@ -409,7 +409,7 @@ class dv_base(object):
         #
         self.set_tick_font(ax)
 
-        if mpl.__version__.split(".")[0] < 2:
+        if int(mpl.__version__.split(".")[0]) < 2:
             spines = ax.spines
             for eachspine in spines:
                 spines[eachspine].set_linewidth(EDGE_LW)

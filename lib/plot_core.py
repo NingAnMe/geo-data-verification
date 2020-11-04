@@ -45,6 +45,7 @@ class PlotAx(object):
     """
     格式化 matplotlib.axis 常用方法
     """
+
     def __init__(self):
         self.font = FONT_MONO  # 字体
 
@@ -182,13 +183,15 @@ class PlotAx(object):
     def plot_density_scatter(cls, ax, x, y, marker='o', alpha=1, marker_size=5, zorder=100):
         pos = np.vstack([x, y])
         kernel = stats.gaussian_kde(pos)
-        z = kernel(pos)
+        color = kernel.evaluate(pos)
+        color = color / 100  # 除100，归一化为0-1之间的值
         norm = plt.Normalize()
-        norm.autoscale(z)
-
-        ax.scatter(x, y, c=z, norm=norm, s=marker_size, marker=marker,
-                   cmap=plt.get_cmap('jet'), lw=0,
-                   alpha=alpha, zorder=zorder)
+        norm.autoscale(color)
+        cmap = plt.get_cmap('jet')
+        r = ax.scatter(x, y, c=color, norm=norm, s=marker_size, marker=marker,
+                       cmap=cmap, lw=0,
+                       alpha=alpha, zorder=zorder)
+        return r
 
     @classmethod
     def plot_regression_line(cls, ax, x, y, w, x_range=None, color='r', linewidth=1.2, zorder=100):
@@ -633,7 +636,6 @@ def get_bar_data(x, y, x_range, step):
 
     return np.array(step_seg), np.array(mean_seg), np.array(std_seg), np.array(
         sample_numbers)
-
 
 # if __name__ == "__main__":
 #     t_base_map = Basemap()

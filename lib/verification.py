@@ -49,6 +49,7 @@ class Verification:
         try:
             print('开始KDtree建模')
             self.kdtree_model = cKDTree(x)
+            print('完成KDtree建模')
             return True
         except Exception as why:
             print(why)
