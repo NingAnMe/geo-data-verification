@@ -168,8 +168,8 @@ def match_file():
                     ymdhms_fy4a = os.path.basename(fy4a_file).split('_')[9][0:12]
                     datetime_fy4a = datetime.strptime(ymdhms_fy4a, '%Y%m%d%H%M')
 
-                    datetime_start = datetime_fy3d - relativedelta(minutes=15)
-                    datetime_end = datetime_fy3d + relativedelta(minutes=15)
+                    datetime_start = datetime_fy3d - relativedelta(minutes=5)
+                    datetime_end = datetime_fy3d + relativedelta(minutes=5)
                     if not (datetime_start <= datetime_fy4a <= datetime_end):
                         continue
 
