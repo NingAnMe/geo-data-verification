@@ -194,6 +194,12 @@ class PlotAx(object):
         return r
 
     @classmethod
+    def plot_hexbin(cls, ax, x, y, alpha=1, zorder=100):
+        cmap = plt.get_cmap('jet')
+        r = ax.hexbin(x, y, cmap=cmap, alpha=alpha, zorder=zorder, mincnt=1)
+        return r
+
+    @classmethod
     def plot_regression_line(cls, ax, x, y, w, x_range=None, color='r', linewidth=1.2, zorder=100):
         ab = np.polyfit(x, y, 1, w=w)
         a = ab[0]
