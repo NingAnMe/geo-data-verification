@@ -5,6 +5,7 @@
 """
 绘制match结果的图像：regression，hist，timeseries，map_r2
 """
+import argparse
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import os
@@ -95,18 +96,19 @@ def plot_verification_picture(date_str, frequency='daily'):
     # 获取数据
     if frequency == 'monthly':
         date_str = date_str[:6]
-    elif frequency == 'sensonly':
+    elif frequency == 'seasonly':
         date_str = date_str[:6]
 
     picture_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA)
     if frequency == 'all':
-        out_dir = os.path.join(RESULT_DIR, 'PICTURE', 'TIMESEIES')
+        out_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA, 'TIMESERIES')
         out_file = os.path.join(out_dir, 'regression_{}_{}_{}_{}.png'.format(AREA, frequency, _date_start, _date_end))
     else:
         out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
         out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
-    # if os.path.isfile(out_file):
-    #     return
+    if os.path.isfile(out_file):
+        print('already exist {}'.format(out_file))
+        return
 
     data = get_match_data(date_str, frequency=frequency)
     if data is None:
@@ -145,10 +147,10 @@ def plot_verification_picture(date_str, frequency='daily'):
                              "R :{:0.2f}".format(r),
                              "RMSE :{:0.2f}".format(_rmse),
                              ]}
-    if frequency == 'all':
+    if frequency != 'daily':
         density = True
     else:
-        density = True
+        density = False
 
     plot_regression(
         x=x,
@@ -182,10 +184,10 @@ def plot_verification_picture_map(date_str, frequency='daily'):
     # 获取数据
     if frequency == 'monthly':
         date_str = date_str[:6]
-    elif frequency == 'sensonly':
+    elif frequency == 'seasonly':
         date_str = date_str[:6]
 
-    out_dir = os.path.join(RESULT_DIR, 'PICTURE', 'TIMESEIES')
+    out_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA, 'TIMESERIES')
     file_out = os.path.join(out_dir, 'r2_map_{}_{}_{}.png'.format(AREA, frequency, date_str))
     # if os.path.isfile(file_out):
     #     print('already exist {}'.format(file_out))
@@ -239,7 +241,7 @@ def plot_verification_picture_map(date_str, frequency='daily'):
     lats_plot = list()
     lons_plot = list()
     r2_plot = list()
-    r2_grid = np.full_like(lats_grid, 0, dtype=np.float)
+    r2_grid = np.full_like(lats_grid, np.nan, dtype=np.float)
     for (i, j), aod_x_y in data_dict.items():
         xs = list()
         ys = list()
@@ -252,25 +254,26 @@ def plot_verification_picture_map(date_str, frequency='daily'):
         if p_value < 0.05:
             lats_plot.append(lat)
             lons_plot.append(lon)
-            r2_plot.append(r_value ** 2)
-            r2_grid[i, j] = r_value ** 2
+            r2_plot.append(np.abs(r_value))
+            r2_grid[i, j] = np.abs(r_value)
     if not lats_plot:
         print('没有数据： {}'.format(file_out))
         return
 
     if LONGITUDE_RANGE is not None:
-        box = [LATITUDE_RANGE[0], LATITUDE_RANGE[1], LONGITUDE_RANGE[0],
-               LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（小），南（大），西（小），东（大）
+        box = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0],
+               LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（大），南（小），西（小），东（大）
     else:
         box = None
-    title = ''
+    # box = None
+    title = '{}'.format(AREA)
     vmin = 0
     vmax = 1
     markersize = 20
     lats_plot = np.array(lats_plot)
     lons_plot = np.array(lons_plot)
     r2_plot = np.array(r2_plot)
-    plot_shanghai(lats_plot, lons_plot, r2_plot, file_out,
+    plot_shanghai(lats_grid, lons_grid, r2_grid, file_out,
                   box=box, title=title, vmin=vmin, vmax=vmax, markersize=markersize)
 
 
@@ -329,37 +332,56 @@ def datestr2datetime(date_str):
 
 
 def plot_timeseries_picture(date_start, date_end, frequency='daily'):
-    data = get_stats_data(date_start, date_end, frequency)
+    try:
+        data = get_stats_data(date_start, date_end, frequency)
+    except pd.errors.EmptyDataError as why:
+        print(why)
+        return
 
     x = list()
     for i in data.date:
         x.append(datestr2datetime(i))
 
-    out_dir = os.path.join(RESULT_DIR, 'PICTURE', 'TIMESEIES')
+    out_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA, 'TIMESERIES')
 
     # ================================ plot BIAS
     y = data.bias_mean
     y_label = 'BIAS'
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{} {}-{} {} And {} AOD BIAS'.format(AREA, date_start, date_end, pair_x, pair_y)
+    title = '{} {}-{} BIAS'.format(AREA, date_start, date_end)
     y_range = [-0.5, 0.5]
     # y_range = [0, 1]
+    # if not os.path.isfile(out_file):
+    #     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
+    # else:
+    #     print('already exist {}'.format(out_file))
+    #     return
     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
 
     # ================================ plot r
     y = data.R
     y_label = "R"
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_R_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{} {}-{} {} And {} AOD R'.format(AREA, date_start, date_end, pair_x, pair_y)
-    y_range = [-1, 1]
+    title = '{} {}-{} R'.format(AREA, date_start, date_end)
+    y_range = [0, 1]
+    # if not os.path.isfile(out_file):
+    #     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
+    # else:
+    #     print('already exist {}'.format(out_file))
+    #     return
     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
 
     # ================================ plot RMSE
     y = data.RMSE
     y_label = "RMSE"
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_RMSE_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{} {}-{} {} And {} AOD RMSE'.format(AREA, date_start, date_end, pair_x, pair_y)
+    title = '{} {}-{} RMSE'.format(AREA, date_start, date_end)
     y_range = [0, 1]
+    # if not os.path.isfile(out_file):
+    #     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
+    # else:
+    #     print('already exist {}'.format(out_file))
+    #     return
     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
 
     # ++++++++++++++++++++++++++++++++ plot BIAS Hist
@@ -367,9 +389,15 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     x_range = [-0.5, 0.5]
     # x_range = [0, 1]
     y_range = [0, 50]
-    title = '{} {}-{} {} And {} AOD BIAS'.format(AREA, date_start, date_end, pair_x, pair_y)
+    title = '{} {}-{} BIAS'.format(AREA, date_start, date_end)
     x_label = 'BIAS'
     out_file = os.path.join(out_dir, 'histogram_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
+    # if not os.path.isfile(out_file):
+    #     plot_histogram(data=y, out_file=out_file, bins_count=20, title=title, x_label=x_label,
+    #                    x_range=x_range, y_range=y_range, )
+    # else:
+    #     print('already exist {}'.format(out_file))
+    #     return
     plot_histogram(data=y, out_file=out_file, bins_count=20, title=title, x_label=x_label,
                    x_range=x_range, y_range=y_range, )
 
@@ -384,9 +412,16 @@ if __name__ == '__main__':
     # MATCH = 'AOD_FY3D_1KM_MODIS_3KM'
     # MATCH = 'AOD_FY3D_5KM_MODIS_10KM'
     # MATCH = 'AOD_FY3D_1KM_FY4A_4KM'
+    parser = argparse.ArgumentParser(description='help')
+    parser.add_argument('--match', '-m', help='', required=False)
+    args = parser.parse_args()
 
-    MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
-    MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
+    if args.match is not None:
+        MATCHES = [args.match]
+    else:
+        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
+        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
+
     for MATCH in MATCHES:
 
         if MATCH == 'AOD_FY3D_5KM_MODIS_10KM':
@@ -436,10 +471,11 @@ if __name__ == '__main__':
                 LATITUDE_RANGE = None
 
             # multi_plot_regression(_date_start, _date_end, 'daily')
-            # multi_plot_regression(_date_start, _date_end, 'monthly')
-            # multi_plot_regression('20181201', _date_end, 'seasonly')
-            # plot_verification_picture(_date_start, 'all')
             # plot_timeseries_picture(_date_start, _date_end, 'daily')
+            # multi_plot_regression(_date_start, _date_end, 'monthly')
+            multi_plot_regression('20181201', _date_end, 'seasonly')
+            plot_verification_picture(_date_start, 'all')
 
+            # multi_plot_map('20190101', _date_end, 'monthly')
             # multi_plot_map('20181201', _date_end, 'seasonly')
-            multi_plot_map('20190101', _date_end, 'all')
+            # multi_plot_map('20190101', _date_end, 'all')

@@ -42,7 +42,7 @@ def plot_map_project(
     else:
         markersize = 5
 
-    p = dv_map.dv_map()
+    p = dv_map()
 
     p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax, box=box,
                ptype=ptype, markersize=markersize, marker=marker)
@@ -91,7 +91,7 @@ def plot_shanghai(latitude,
 
     p = dv_map(fig=fig)
 
-    subplots_adjust(left=0.07, right=0.98, top=0.98, bottom=0.12)
+    subplots_adjust(left=0.07, right=0.98, top=0.90, bottom=0.15)
     p.show_colorbar = False
     p.show_countries = False
     p.show_coastlines = False
@@ -110,14 +110,14 @@ def plot_shanghai(latitude,
     # set color map
     p.valmin = vmin
     p.valmax = vmax
-    p.colormap = plt.get_cmap('summer')  # mpl.cm.rainbow
+    p.colormap = plt.get_cmap('jet')  # mpl.cm.rainbow, summer
     # p.colorbar_extend = "max"
 
     # plot
     p.easyplot(latitude, longitude, value, box=box, markersize=markersize, ptype="pcolormesh")
 
     # 色标 ---------------------------
-    cb_loc = [0.07, 0.07, 0.90, 0.03]
+    cb_loc = [0.12, 0.07, 0.76, 0.03]
     # unit = r"$\mathregular{(10^{15}\/\/molec/cm^2)}$"
     fontsize = 16
     # p.add_custom_colorbar(cb_loc, p.valmin, p.valmax,

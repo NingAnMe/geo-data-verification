@@ -6,7 +6,7 @@ import h5py
 import numpy as np
 
 
-def get_hdf5_data(cls, hdf5_file, data_name, slope=None, intercept=None, valid_range=None):
+def get_hdf5_data(hdf5_file, data_name, slope=None, intercept=None, valid_range=None):
     with h5py.File(hdf5_file, 'r') as hdf:
         dataset = hdf.get(data_name)
         if slope is None:

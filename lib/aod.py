@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2020-07-30 12:36
 # @Author  : NingAnMe <ninganme@qq.com>
-from datetime import datetime
 import os
 import h5py
 from pyhdf.SD import SD, SDC
@@ -146,3 +145,45 @@ class AodModis:
 
     def get_aod(self):
         return self.get_hdf4_data(self.in_file, 'Optical_Depth_Land_And_Ocean', valid_range=(0, 1500))
+
+
+class AodModis100km:
+    def __init__(self, in_file, geo_file=None):
+        self.in_file = in_file
+        self.geo_file = geo_file
+        self.filename = os.path.basename(in_file)
+
+    @classmethod
+    def get_hdf4_data(cls, hdf4_file, data_name, slope=None, intercept=None, valid_range=None):
+        hdf = SD(hdf4_file, SDC.READ)
+        dataset = hdf.select(data_name)
+        if dataset is not None:
+            attrs = dataset.attributes()
+            if slope is None:
+                slope = attrs['scale_factor']
+            if intercept is None:
+                intercept = attrs['add_offset']
+            if valid_range is None:
+                valid_range = attrs['valid_range']
+            data = dataset.get().astype(np.float)
+            valid_index = np.logical_or(data < valid_range[0], data > valid_range[1])
+            data = data * slope + intercept
+            data[valid_index] = -999
+            return data
+
+    @staticmethod
+    def get_lon_lat():
+        laty = np.arange(90, -90, -1)
+        lonx = np.arange(-180, 180, 1)
+        lons, lats = np.meshgrid(lonx, laty)
+        return lons, lats
+
+    @staticmethod
+    def get_lon_lat_5km():
+        laty = np.arange(90, -90, -0.05)
+        lonx = np.arange(-180, 180, 0.05)
+        lons, lats = np.meshgrid(lonx, laty)
+        return lons, lats
+
+    def get_aod(self):
+        return self.get_hdf4_data(self.in_file, 'Aerosol_Optical_Depth_Land_Mean_Mean', valid_range=(0, 1500))

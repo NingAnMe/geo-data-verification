@@ -77,13 +77,15 @@ def plot_regression(
         zorder = 80
         result = plot_ax.plot_density_scatter(ax1, x, y, marker=marker, alpha=alpha, marker_size=marker_size,
                                               zorder=zorder)
-        fig.colorbar(result, ax=ax1)
+        # result = plot_ax.plot_hexbin(ax1, x, y, alpha=alpha, zorder=zorder)
+        cb = fig.colorbar(result, ax=ax1)
+        # cb.set_label('Count')
     else:
         alpha = 0.8  # 透明度
         marker = "o"  # 形状
         color = "b"  # 颜色
         zorder = 80
-        ax1.scatter(x, y, s=marker_size, marker=marker, c=color, lw=0, alpha=alpha, zorder=80)
+        ax1.scatter(x, y, s=marker_size, marker=marker, c=color, lw=0, alpha=alpha, zorder=zorder)
 
     # ##### 画回归线
     color = 'r'
