@@ -11,7 +11,7 @@ from scipy import stats
 import matplotlib as mpl
 import matplotlib.image as img
 
-mpl.use("Agg")  # 必须加这个字段，否则引用 pyplot 服务器会报错，服务器上面没有 TK
+# mpl.use("Agg")  # 必须加这个字段，否则引用 pyplot 服务器会报错，服务器上面没有 TK
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -119,7 +119,7 @@ class PlotAx(object):
                 y_label_font_size = self.y_label_font_size
             ax.set_ylabel(y_label, fontsize=y_label_font_size, fontproperties=self.label_font)
 
-        # 设置 x y 轴的范围
+        # 设置 x 轴的范围和Tick
         if 'x_axis_min' in kwargs and 'x_axis_max' in kwargs:
             x_axis_min = kwargs.get('x_axis_min')
             x_axis_max = kwargs.get('x_axis_max')
@@ -129,28 +129,36 @@ class PlotAx(object):
             if kwargs.get('timeseries'):
                 self.set_timeseries_x_locator(ax, x_axis_min, x_axis_max)
 
+            # 设置大小tick数量
+            if kwargs.get('x_interval'):
+                x_interval = kwargs.get('x_interval')
+                x_major_count = int((x_axis_max - x_axis_min) / x_interval + 1)
+                if x_major_count <= 11:
+                    x_minor_count = 4
+                else:
+                    x_minor_count = 1
+                # 设置大刻度的数量
+                ax.xaxis.set_major_locator(LinearLocator(x_major_count))
+                # 设置小刻度的数量
+                ax.xaxis.set_minor_locator(LinearLocator((x_major_count - 1) * (x_minor_count + 1) + 1))
+
         if 'y_axis_min' in kwargs and 'y_axis_max' in kwargs:
             y_axis_min = kwargs.get('y_axis_min')
             y_axis_max = kwargs.get('y_axis_max')
             ax.set_ylim(y_axis_min, y_axis_max)
 
-        # 设置大刻度的数量
-        if 'x_major_count' in kwargs:
-            x_major_count = kwargs.get('x_major_count')
-            ax.xaxis.set_major_locator(LinearLocator(x_major_count))
-        if 'y_major_count' in kwargs:
-            y_major_count = kwargs.get('y_major_count')
-            ax.yaxis.set_major_locator(LinearLocator(y_major_count))
-
-        # 设置小刻度的数量
-        if 'x_minor_count' in kwargs:
-            x_minor_count = kwargs.get('x_minor_count')
-            x_major_count = len(ax.xaxis.get_majorticklocs())
-            ax.xaxis.set_minor_locator(LinearLocator((x_major_count - 1) * (x_minor_count + 1) + 1))
-        if 'y_minor_count' in kwargs:
-            y_minor_count = kwargs.get('y_minor_count')
-            y_major_count = len(ax.yaxis.get_majorticklocs())
-            ax.yaxis.set_minor_locator(LinearLocator((y_major_count - 1) * (y_minor_count + 1) + 1))
+            # 设置大小tick数量
+            if kwargs.get('y_interval'):
+                y_interval = kwargs.get('y_interval')
+                y_major_count = int((y_axis_max - y_axis_min) / y_interval + 1)
+                if y_major_count <= 11:
+                    y_minor_count = 4
+                else:
+                    y_minor_count = 1
+                # 设置大刻度的数量
+                ax.yaxis.set_major_locator(LinearLocator(y_major_count))
+                # 设置小刻度的数量
+                ax.yaxis.set_minor_locator(LinearLocator((y_major_count - 1) * (y_minor_count + 1) + 1))
 
         if 'tick_font' in kwargs:
             self.tick_font = kwargs['tick_font']
@@ -158,8 +166,8 @@ class PlotAx(object):
             self.tick_font_color = kwargs['tick_font_color']
         if 'tick_font_size' in kwargs:
             self.tick_font_size = kwargs['tick_font_size']
-        set_tick_font(
-            ax, font=self.tick_font, color=self.tick_font_color, font_size=self.tick_font_size)
+        if self.tick_font is not None or self.tick_font_color is not None or self.tick_font_size is not None:
+            set_tick_font(ax, font=self.tick_font, color=self.tick_font_color, font_size=self.tick_font_size)
 
         # 设置图片注释文字
         if 'annotate' in kwargs:
@@ -603,8 +611,7 @@ def get_month_avg_std(date_day, value_day):
 
     ymd_start = np.nanmin(date_day)  # 第一天日期
     ymd_end = np.nanmax(date_day)  # 最后一天日期
-    month_date_start = ymd_start - relativedelta(
-        days=(ymd_start.day - 1))  # 第一个月第一天日期
+    month_date_start = ymd_start - relativedelta(days=(ymd_start.day - 1))  # 第一个月第一天日期
 
     while month_date_start <= ymd_end:
         # 当月最后一天日期

@@ -66,7 +66,6 @@ def plot_regression(
     dpi = 100
     fig = plt.figure(figsize=figsize, dpi=dpi)
     ax1 = plt.subplot2grid((1, 1), (0, 0))
-
     plot_ax = PlotAx()
 
     # ##### 画散点
@@ -114,21 +113,10 @@ def plot_regression(
     if y_label is not None:
         format_kwargs['y_label'] = y_label
     if x_interval is not None:
-        x_major_count = (x_range[1] - x_range[0]) / x_interval + 1
-        format_kwargs['x_major_count'] = x_major_count
-        if x_major_count <= 11:
-            x_minor_count = 4
-        else:
-            x_minor_count = 1
-        format_kwargs['x_minor_count'] = x_minor_count
+        format_kwargs['x_interval'] = x_interval
     if y_interval is not None:
-        y_major_count = (y_range[1] - y_range[0]) / y_interval + 1
-        format_kwargs['y_major_count'] = y_major_count
-        if y_major_count <= 11:
-            y_minor_count = 4
-        else:
-            y_minor_count = 1
-        format_kwargs['y_minor_count'] = y_minor_count
+        format_kwargs['y_interval'] = y_interval
+
     if annotate is not None:
         format_kwargs['annotate'] = annotate
         format_kwargs['annotate_color'] = REGRESSION_ANNOTATE_COLOR
