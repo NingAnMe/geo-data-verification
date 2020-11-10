@@ -23,7 +23,7 @@ def plot_map_mean_5km(frequency='monthly'):
     for aod_mean_file in files:
         print("<<< {}".format(aod_mean_file))
 
-        month = os.path.basename(aod_mean_file).split('_')[5]
+        month = os.path.basename(aod_mean_file).split('_')[5][:6]
 
         box = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0], LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（小），南（大），东（大），西（小）
         title = '{} {}'.format(month, AREA)
@@ -33,9 +33,11 @@ def plot_map_mean_5km(frequency='monthly'):
         filename_out = '{}_'.format(AREA) + os.path.basename(aod_mean_file) + '.png'
         dir_out = os.path.join(AOD_MAP_DIR, SATELLITE, frequency.upper())
         file_out = os.path.join(dir_out, filename_out)
-        if os.path.isfile(file_out):
-            print('already exist {}'.format(file_out))
-            continue
+
+        # 是否重处理
+        # if os.path.isfile(file_out):
+        #     print('already exist {}'.format(file_out))
+        #     continue
 
         aod = get_hdf5_data(aod_mean_file, 'aod_mean', 1, 0, [0, 1.5])
         lons = get_hdf5_data(aod_mean_file, 'lon', 1, 0, [-180, 180])
@@ -101,7 +103,7 @@ def plot_map_mean_5km(frequency='monthly'):
         #                   fontproperties=p.font_mid, fontsize=fontsize)
 
         # 标题 ---------------------------
-        p.w_title = p.suptitle(title, fontsize=22, y=0.97)
+        p.w_title = p.suptitle(title, fontsize=14, y=0.97)
 
         # save
         p.savefig(out_file, dpi=300)

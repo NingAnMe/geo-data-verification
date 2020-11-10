@@ -136,7 +136,7 @@ def plot_shanghai(latitude,
     #                   fontproperties=p.font_mid, fontsize=fontsize)
 
     # 标题 ---------------------------
-    p.w_title = p.suptitle(title, fontsize=22, y=0.97)
+    p.w_title = p.suptitle(title, fontsize=14, y=0.97)
 
     # save
     p.savefig(out_file, dpi=300)
