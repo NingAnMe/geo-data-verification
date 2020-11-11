@@ -673,7 +673,8 @@ class dv_map(dv_base):
     def city_boundary(self, name,
                       drawbounds=True, zorder=None,
                       linewidth=0.5, color='k',
-                      default_encoding='utf-8'):
+                      default_encoding='utf-8',
+                      shape_name='中国省级行政区'):
         """
         Read in shape file, optionally draw boundaries on map.
 
@@ -742,7 +743,7 @@ class dv_map(dv_base):
         from matplotlib.collections import LineCollection
         #         shp.default_encoding = default_encoding
 
-        shapefile = str(selfPath / u'SHP/中国县市')
+        shapefile = str(selfPath / u'SHP/{}'.format(shape_name))
         if not os.path.exists('%s.shp' % shapefile):
             raise IOError('cannot locate %s.shp' % shapefile)
         if not os.path.exists('%s.shx' % shapefile):
@@ -756,7 +757,7 @@ class dv_map(dv_base):
         except:
             raise IOError('error reading shapefile %s.shp' % shapefile)
         fields = shf.fields
-        coords = [];
+        coords = []
         attributes = []
         msg = "dummy"
         shptype = shf.shapes()[0].shapeType
@@ -764,10 +765,14 @@ class dv_map(dv_base):
         info = (shf.numRecords, shptype, bbox[0:2] + [0., 0.], bbox[2:] + [0., 0.])
         npoly = 0
         for shprec in shf.shapeRecords():
-            if (name != shprec.record[4] and name != shprec.record[2]):
-                continue
+            if shape_name == '中国县市':
+                if (name != shprec.record[4] and name != shprec.record[2] and name != shprec.record[5]):
+                    continue
+            elif shape_name == '中国省级行政区':
+                if name != shprec.record[0]:
+                    continue
 
-            shp = shprec.shape;
+            shp = shprec.shape
             rec = shprec.record
             npoly = npoly + 1
             if shptype != shp.shapeType:
