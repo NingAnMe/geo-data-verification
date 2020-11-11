@@ -261,7 +261,6 @@ def plot_timeseries(
         x_min = np.nanmin(data_x)
         x_max = np.nanmax(data_x)
         x_range = [x_min, x_max]
-
     # 绘制日数据长时间序列
     plot_ax.plot_time_series(ax1, data_x, data_y, marker='x', color=BLUE, line_width=None,
                              marker_size=6,
@@ -290,6 +289,7 @@ def plot_timeseries(
                                              color=RED,
                                              alpha=0.2,
                                              )
+    ax1.legend(loc='upper left')
     # 绘制 y=0 线配置，在绘制之前设置x轴范围
     if plot_zeroline:
         plot_ax.plot_zero_line(ax1, data_x, x_range)
@@ -326,18 +326,18 @@ def plot_timeseries(
     else:
         fig.subplots_adjust(bottom=0.2, top=0.85)
 
-    if ymd_start and ymd_end:
-        circle1 = mpatches.Circle((74, 15), 6, color=BLUE, ec=GRAY, lw=0)
-        circle2 = mpatches.Circle((164, 15), 6, color=RED, ec=GRAY, lw=0)
-        fig.patches.extend([circle1, circle2])
-
-        fig.text(0.15, 0.02, 'Daily', color=BLUE, fontproperties=BOTTOM_FONT)
-        fig.text(0.3, 0.02, 'Monthly', color=RED, fontproperties=BOTTOM_FONT)
-        fig.text(0.50, 0.02, '%s-%s' % (ymd_start, ymd_end), fontproperties=BOTTOM_FONT)
-    elif ymd:
-        fig.text(0.50, 0.02, '%s' % ymd, fontproperties=BOTTOM_FONT)
-
-    fig.text(0.8, 0.02, ORG_NAME, fontproperties=BOTTOM_FONT)
+    # if ymd_start and ymd_end:
+    #     circle1 = mpatches.Circle((74, 15), 6, color=BLUE, ec=GRAY, lw=0)
+    #     circle2 = mpatches.Circle((164, 15), 6, color=RED, ec=GRAY, lw=0)
+    #     fig.patches.extend([circle1, circle2])
+    #
+    #     fig.text(0.15, 0.02, 'Daily', color=BLUE, fontproperties=BOTTOM_FONT)
+    #     fig.text(0.3, 0.02, 'Monthly', color=RED, fontproperties=BOTTOM_FONT)
+    #     fig.text(0.50, 0.02, '%s-%s' % (ymd_start, ymd_end), fontproperties=BOTTOM_FONT)
+    # elif ymd:
+    #     fig.text(0.50, 0.02, '%s' % ymd, fontproperties=BOTTOM_FONT)
+    #
+    # fig.text(0.8, 0.02, ORG_NAME, fontproperties=BOTTOM_FONT)
     # ---------------
     make_sure_path_exists(os.path.dirname(out_file))
     fig.savefig(out_file, dpi=100)

@@ -623,7 +623,8 @@ def get_month_avg_std(date_day, value_day):
 
         avg = np.nanmean(value_month)
         std = np.nanstd(value_month)
-        date_month = np.append(date_month, month_date_start + relativedelta(days=14))
+        # date_month = np.append(date_month, month_date_start + relativedelta(days=14))
+        date_month = np.append(date_month, month_date_start)  # 2020-11-10用户改为对齐
         avg_month = np.append(avg_month, avg)
         std_month = np.append(std_month, std)
 

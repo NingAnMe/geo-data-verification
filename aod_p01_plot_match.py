@@ -24,6 +24,18 @@ from lib.proj import ProjCore, meter2degree
 from config import *
 
 
+def get_season(ym):
+    season = {
+        '201812': '2018 DJF',
+        '201903': '2019 MAM',
+        '201906': '2019 JJA',
+        '201909': '2019 SON',
+        '201912': '2019 DJF',
+        '202003': '2020 MAM',
+    }
+    return season[ym]
+
+
 def get_match_data(date_str_in, frequency='daily'):
     """
     找到对应日期或者对应月份的匹配数据，并且读取所有数据
@@ -92,7 +104,7 @@ def get_match_data(date_str_in, frequency='daily'):
     return data
 
 
-def plot_verification_picture(date_str, frequency='daily'):
+def plot_verification_picture(date_str, date_end=None, frequency='daily'):
     # 获取数据
     if frequency == 'monthly':
         date_str = date_str[:6]
@@ -106,9 +118,9 @@ def plot_verification_picture(date_str, frequency='daily'):
     else:
         out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
         out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
-    if os.path.isfile(out_file):
-        print('already exist {}'.format(out_file))
-        return
+    # if os.path.isfile(out_file):
+    #     print('already exist {}'.format(out_file))
+    #     return
 
     data = get_match_data(date_str, frequency=frequency)
     if data is None:
@@ -126,12 +138,20 @@ def plot_verification_picture(date_str, frequency='daily'):
         return
 
     # ====================== 绘制回归图 ===========================
-    title = "{} {} AOD 550nm".format(date_str, AREA)
+    if frequency == 'seasonly':
+        season = get_season(date_str)
+        title = '{} {} AOD 550nm'.format(season, AREA)
+    elif frequency == 'all':
+        title = '{}-{} {} AOD 550nm'.format(date_str, date_end, AREA)
+    else:
+        title = "{} {} AOD 550nm".format(date_str, AREA)
 
     x_range = [0, 1.5]
     y_range = [0, 1.5]
     x_label = '{}'.format(pair_x)
     y_label = '{}'.format(pair_y)
+    x_interval = 0.3
+    y_interval = 0.3
 
     slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
     r = r_value  # 2020-11-04：散点图改为使用r，不使用r2
@@ -161,6 +181,8 @@ def plot_verification_picture(date_str, frequency='daily'):
         y_label=y_label,
         x_range=x_range,
         y_range=y_range,
+        x_interval=x_interval,
+        y_interval=y_interval,
         annotate=annotate,
         density=density
     )
@@ -180,7 +202,7 @@ def plot_verification_picture(date_str, frequency='daily'):
     return stats_data
 
 
-def plot_verification_picture_map(date_str, frequency='daily'):
+def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
     # 获取数据
     if frequency == 'monthly':
         date_str = date_str[:6]
@@ -265,8 +287,14 @@ def plot_verification_picture_map(date_str, frequency='daily'):
                LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（大），南（小），西（小），东（大）
     else:
         box = None
-    # box = None
-    title = '{}'.format(AREA)
+
+    if frequency == 'seasonly':
+        season = get_season(date_str)
+        title = '{} {} R'.format(season, AREA)
+    elif frequency == 'all':
+        title = '{}-{} {} R'.format(date_str, date_end, AREA)
+    else:
+        title = "{} {} R".format(date_str, AREA)
     vmin = 0
     vmax = 1
     markersize = 20
@@ -283,7 +311,7 @@ def multi_plot_regression(date_start, date_end, frequency='daily'):
     stats_data = defaultdict(list)
     while datetime_start <= datetime_end:
         date_str = datetime_start.strftime("%Y%m%d")
-        datas = plot_verification_picture(date_str, frequency)
+        datas = plot_verification_picture(date_str, date_end=date_end, frequency=frequency)
         if datas:
             for key, value in datas.items():
                 stats_data[key].append(value)
@@ -294,6 +322,8 @@ def multi_plot_regression(date_start, date_end, frequency='daily'):
             datetime_start = datetime_start + relativedelta(months=1)
         elif frequency == 'seasonly':
             datetime_start = datetime_start + relativedelta(months=3)
+        else:
+            break
     stats_data = pd.DataFrame(stats_data)
     out_dir = os.path.join(RESULT_DIR, 'STATS')
     make_sure_path_exists(out_dir)
@@ -307,7 +337,7 @@ def multi_plot_map(date_start, date_end, frequency='daily'):
     datetime_end = datetime.strptime(date_end, "%Y%m%d")
     while datetime_start <= datetime_end:
         date_str = datetime_start.strftime("%Y%m%d")
-        plot_verification_picture_map(date_str, frequency)
+        plot_verification_picture_map(date_str, date_end=date_end, frequency=frequency)
         if frequency == 'daily':
             datetime_start = datetime_start + relativedelta(days=1)
         elif frequency == 'monthly':
@@ -356,7 +386,8 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     # else:
     #     print('already exist {}'.format(out_file))
     #     return
-    plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
+    plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True,
+                    ymd_start=date_start, ymd_end=date_end)
 
     # ================================ plot r
     y = data.R
@@ -369,7 +400,8 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     # else:
     #     print('already exist {}'.format(out_file))
     #     return
-    plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
+    plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True,
+                    ymd_start=date_start, ymd_end=date_end)
 
     # ================================ plot RMSE
     y = data.RMSE
@@ -382,7 +414,8 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     # else:
     #     print('already exist {}'.format(out_file))
     #     return
-    plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
+    plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True,
+                    ymd_start=date_start, ymd_end=date_end)
 
     # ++++++++++++++++++++++++++++++++ plot BIAS Hist
     y = data.bias_mean
@@ -403,12 +436,6 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
 
 
 if __name__ == '__main__':
-    # AREA = 'China'
-    # AREA = 'ChangSanJiao'
-    # AREA = 'ZhuSanJiao'
-    # AREA = 'FenWei'
-    # AREA = 'JingJinJi'
-
     # MATCH = 'AOD_FY3D_1KM_MODIS_3KM'
     # MATCH = 'AOD_FY3D_5KM_MODIS_10KM'
     # MATCH = 'AOD_FY3D_1KM_FY4A_4KM'
@@ -446,24 +473,23 @@ if __name__ == '__main__':
             _date_start = "20190101"
             _date_end = "20200531"
 
-        # AREAs = ['China', 'ChangSanJiao', 'ZhuSanJiao', 'FenWei', 'JingJinJi']
-        AREAs = ['ChangSanJiao', 'ZhuSanJiao', 'JingJinJi', 'FenWei']
+        AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
 
         for AREA in AREAs:
 
             if AREA == 'China':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_China
                 LATITUDE_RANGE = LATITUDE_RANGE_China
-            elif AREA == 'ChangSanJiao':
+            elif AREA == 'YRD':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_ChangSanJiao
                 LATITUDE_RANGE = LATITUDE_RANGE_ChangSanJiao
-            elif AREA == 'ZhuSanJiao':
+            elif AREA == 'PRD':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_ZhuSanJiao
                 LATITUDE_RANGE = LATITUDE_RANGE_ZhuSanJiao
-            elif AREA == 'FenWei':
+            elif AREA == 'FWP':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_FenWei
                 LATITUDE_RANGE = LATITUDE_RANGE_FenWei
-            elif AREA == 'JingJinJi':
+            elif AREA == 'BTH':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_JingJinJi
                 LATITUDE_RANGE = LATITUDE_RANGE_JingJinJi
             else:
@@ -471,11 +497,12 @@ if __name__ == '__main__':
                 LATITUDE_RANGE = None
 
             # multi_plot_regression(_date_start, _date_end, 'daily')
-            # plot_timeseries_picture(_date_start, _date_end, 'daily')
+            plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一边，用户改为对齐
             # multi_plot_regression(_date_start, _date_end, 'monthly')
-            multi_plot_regression('20181201', _date_end, 'seasonly')
-            plot_verification_picture(_date_start, 'all')
+            # multi_plot_regression('20181201', _date_end, 'seasonly')
 
-            # multi_plot_map('20190101', _date_end, 'monthly')
+            # multi_plot_map(_date_start, _date_end, 'monthly')
             # multi_plot_map('20181201', _date_end, 'seasonly')
-            # multi_plot_map('20190101', _date_end, 'all')
+            # multi_plot_map(_date_start, _date_end, 'all')
+
+            # multi_plot_regression(_date_start, _date_end, 'all')
