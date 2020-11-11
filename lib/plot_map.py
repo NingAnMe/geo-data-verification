@@ -62,7 +62,8 @@ def plot_shanghai(latitude,
                   vmin=None,
                   vmax=None,
                   marker=None,
-                  markersize=None):
+                  markersize=None,
+                  AREA=None):
     if box is not None:
         box = box  # nlat, slat, wlon, elon:北（小），南（大），东（大），西（小）
     if title is not None:
@@ -115,6 +116,21 @@ def plot_shanghai(latitude,
 
     # plot
     p.easyplot(latitude, longitude, value, box=box, markersize=markersize, ptype="pcolormesh")
+
+    if AREA:
+        print('设置地区 ：{}'.format(AREA))
+        if AREA == 'YRD':
+            citys = ["江苏省", "安徽省", "浙江省", "上海市"]
+        elif AREA == 'BTH':
+            citys = ["北京市", "天津市", "河北省"]
+        elif AREA == 'FWP':
+            citys = ["陕西省", "山西省", "河南省"]
+        elif AREA == 'FWP':
+            citys = ["广东省"]
+        else:
+            citys = []
+        for city in citys:
+            p.city_boundary(city, linewidth=1.2, shape_name='中国省级行政区')
 
     # 色标 ---------------------------
     cb_loc = [0.12, 0.07, 0.76, 0.03]
