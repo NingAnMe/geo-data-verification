@@ -133,10 +133,13 @@ class PlotAx(object):
             if kwargs.get('x_interval'):
                 x_interval = kwargs.get('x_interval')
                 x_major_count = int((x_axis_max - x_axis_min) / x_interval + 1)
-                if x_major_count <= 11:
-                    x_minor_count = 4
+                if kwargs.get('x_minor_count') is not None:
+                    x_minor_count = kwargs.get('x_minor_count')
                 else:
-                    x_minor_count = 1
+                    if x_major_count <= 11:
+                        x_minor_count = 4
+                    else:
+                        x_minor_count = 1
                 # 设置大刻度的数量
                 ax.xaxis.set_major_locator(LinearLocator(x_major_count))
                 # 设置小刻度的数量
@@ -151,10 +154,13 @@ class PlotAx(object):
             if kwargs.get('y_interval'):
                 y_interval = kwargs.get('y_interval')
                 y_major_count = int((y_axis_max - y_axis_min) / y_interval + 1)
-                if y_major_count <= 11:
-                    y_minor_count = 4
+                if kwargs.get('y_minor_count') is not None:
+                    y_minor_count = kwargs.get('y_minor_count')
                 else:
-                    y_minor_count = 1
+                    if y_major_count <= 11:
+                        y_minor_count = 4
+                    else:
+                        y_minor_count = 1
                 # 设置大刻度的数量
                 ax.yaxis.set_major_locator(LinearLocator(y_major_count))
                 # 设置小刻度的数量

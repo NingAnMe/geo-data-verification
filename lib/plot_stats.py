@@ -76,8 +76,9 @@ def plot_regression(
         zorder = 80
         result = plot_ax.plot_density_scatter(ax1, x, y, marker=marker, alpha=alpha, marker_size=marker_size,
                                               zorder=zorder)
+        fig.colorbar(result, ax=ax1)
         # result = plot_ax.plot_hexbin(ax1, x, y, alpha=alpha, zorder=zorder)
-        cb = fig.colorbar(result, ax=ax1)
+        # cb = fig.colorbar(result, ax=ax1)
         # cb.set_label('Count')
     else:
         alpha = 0.8  # 透明度
@@ -157,7 +158,7 @@ def plot_regression(
 def plot_histogram(
         data,
         out_file=None,
-        bins_count=200,
+        bins_count='auto',
         title=None,
         x_label=None,
         y_label=None,
@@ -168,6 +169,7 @@ def plot_histogram(
         ymd_start=None,
         ymd_end=None,
         ymd=None, ):
+    import seaborn as sns
     # style_path = STYLE_PATH
     # style_file = os.path.join(style_path, 'plot_histogram.mplstyle')
     # plt.style.use(style_file)
@@ -176,13 +178,7 @@ def plot_histogram(
     fig = plt.figure(figsize=figsize, dpi=dpi)
     ax1 = plt.subplot2grid((1, 1), (0, 0))
 
-    ax1.hist(data,
-             bins=bins_count,
-             range=x_range,
-             histtype="bar",
-             color='b',
-             label=hist_label,
-             alpha=1, )
+    sns.histplot(data, ax=ax1, color='b', bins=bins_count)
 
     plot_ax = PlotAx()
 
@@ -297,6 +293,7 @@ def plot_timeseries(
     format_kwargs = {
         'timeseries': True,
         'tick_font_size': 11,
+        'y_minor_count': 0
     }
     if x_range is not None:
         format_kwargs['x_axis_min'] = x_range[0]
@@ -304,14 +301,8 @@ def plot_timeseries(
     if y_range is not None:
         format_kwargs['y_axis_min'] = y_range[0]
         format_kwargs['y_axis_max'] = y_range[1]
-    if y_interval is not None and y_range is not None:
-        y_major_count = (y_range[1] - y_range[0]) / y_interval + 1
-        format_kwargs['y_major_count'] = y_major_count
-        if y_major_count <= 11:
-            y_minor_count = 4
-        else:
-            y_minor_count = 1
-        format_kwargs['y_minor_count'] = y_minor_count
+    if y_interval is not None:
+        format_kwargs['y_interval'] = y_interval
     if y_label is not None:
         format_kwargs['y_label'] = y_label
     if annotate is not None:

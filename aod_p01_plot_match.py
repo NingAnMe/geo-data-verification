@@ -140,11 +140,11 @@ def plot_verification_picture(date_str, date_end=None, frequency='daily'):
     # ====================== 绘制回归图 ===========================
     if frequency == 'seasonly':
         season = get_season(date_str)
-        title = '{} {} AOD 550nm'.format(season, AREA)
+        title = '{} AOD (550nm) over {}'.format(season, AREA)
     elif frequency == 'all':
-        title = '{}-{} {} AOD 550nm'.format(date_str, date_end, AREA)
+        title = '{}-{} AOD (550nm) over {}'.format(date_str, date_end, AREA)
     else:
-        title = "{} {} AOD 550nm".format(date_str, AREA)
+        title = "{} AOD (550nm) over {}".format(date_str, AREA)
 
     x_range = [0, 1.5]
     y_range = [0, 1.5]
@@ -290,17 +290,17 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
 
     if frequency == 'seasonly':
         season = get_season(date_str)
-        title = '{} {} R'.format(season, AREA)
+        title = '{} R over {}'.format(season, AREA)
     elif frequency == 'all':
-        title = '{}-{} {} R'.format(date_str, date_end, AREA)
+        title = '{}-{} R over {}'.format(date_str, date_end, AREA)
     else:
-        title = "{} {} R".format(date_str, AREA)
+        title = "{} R over {}".format(date_str, AREA)
     vmin = 0
     vmax = 1
     markersize = 20
-    lats_plot = np.array(lats_plot)
-    lons_plot = np.array(lons_plot)
-    r2_plot = np.array(r2_plot)
+    # lats_plot = np.array(lats_plot)
+    # lons_plot = np.array(lons_plot)
+    # r2_plot = np.array(r2_plot)
     plot_shanghai(lats_grid, lons_grid, r2_grid, file_out,
                   box=box, title=title, vmin=vmin, vmax=vmax, markersize=markersize)
 
@@ -378,22 +378,23 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     y = data.bias_mean
     y_label = 'BIAS'
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{} {}-{} BIAS'.format(AREA, date_start, date_end)
+    title = '{}-{} Diff.(MERSI-MODIS) over {}'.format(date_start, date_end, AREA)
     y_range = [-0.5, 0.5]
-    # y_range = [0, 1]
+    y_interval = 0.1
     # if not os.path.isfile(out_file):
     #     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
     # else:
     #     print('already exist {}'.format(out_file))
     #     return
     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True,
+                    y_interval=y_interval,
                     ymd_start=date_start, ymd_end=date_end)
 
     # ================================ plot r
     y = data.R
     y_label = "R"
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_R_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{} {}-{} R'.format(AREA, date_start, date_end)
+    title = '{}-{} R over {}'.format(date_start, date_end, AREA)
     y_range = [0, 1]
     # if not os.path.isfile(out_file):
     #     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
@@ -407,7 +408,7 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     y = data.RMSE
     y_label = "RMSE"
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_RMSE_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{} {}-{} RMSE'.format(AREA, date_start, date_end)
+    title = '{}-{} RMSE over {}'.format(date_start, date_end, AREA)
     y_range = [0, 1]
     # if not os.path.isfile(out_file):
     #     plot_timeseries(x, y, out_file=out_file, title=title, y_label=y_label, y_range=y_range, plot_month=True)
@@ -420,10 +421,10 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     # ++++++++++++++++++++++++++++++++ plot BIAS Hist
     y = data.bias_mean
     x_range = [-0.5, 0.5]
-    # x_range = [0, 1]
     y_range = [0, 50]
-    title = '{} {}-{} BIAS'.format(AREA, date_start, date_end)
-    x_label = 'BIAS'
+    title = '{}-{} Diff.(MERSI-MODIS) AOD over YRD'.format(date_start, date_end, AREA)
+    x_label = 'Diff.(MERSI-MODIS)'
+    y_label = 'Count'
     out_file = os.path.join(out_dir, 'histogram_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
     # if not os.path.isfile(out_file):
     #     plot_histogram(data=y, out_file=out_file, bins_count=20, title=title, x_label=x_label,
@@ -431,7 +432,7 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     # else:
     #     print('already exist {}'.format(out_file))
     #     return
-    plot_histogram(data=y, out_file=out_file, bins_count=20, title=title, x_label=x_label,
+    plot_histogram(data=y, out_file=out_file, bins_count='auto', title=title, x_label=x_label, y_label=y_label,
                    x_range=x_range, y_range=y_range, )
 
 
@@ -446,8 +447,8 @@ if __name__ == '__main__':
     if args.match is not None:
         MATCHES = [args.match]
     else:
-        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
-        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
+        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
+        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
 
     for MATCH in MATCHES:
 
@@ -496,13 +497,13 @@ if __name__ == '__main__':
                 LONGITUDE_RANGE = None
                 LATITUDE_RANGE = None
 
-            # multi_plot_regression(_date_start, _date_end, 'daily')
+            multi_plot_regression(_date_start, _date_end, 'daily')
             plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一边，用户改为对齐
-            # multi_plot_regression(_date_start, _date_end, 'monthly')
-            # multi_plot_regression('20181201', _date_end, 'seasonly')
+            multi_plot_regression(_date_start, _date_end, 'monthly')
+            multi_plot_regression('20181201', _date_end, 'seasonly')
 
             # multi_plot_map(_date_start, _date_end, 'monthly')
             # multi_plot_map('20181201', _date_end, 'seasonly')
-            # multi_plot_map(_date_start, _date_end, 'all')
+            multi_plot_map(_date_start, _date_end, 'all')
 
-            # multi_plot_regression(_date_start, _date_end, 'all')
+            multi_plot_regression(_date_start, _date_end, 'all')
