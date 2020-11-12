@@ -5,9 +5,7 @@
 """
 计算AOD数据月平均和季度平均
 """
-import os
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from collections import defaultdict
 from scipy.interpolate import griddata
 
@@ -62,34 +60,48 @@ def get_mean(aod_sum, aod_count):
     return aod_mean
 
 
-def mean_modis_100km(frequency='monthly'):
+def mean_modis_10km(frequency='monthly'):
     file_dict = defaultdict(list)
-    for root, dirs, files in os.walk(AOD_MODIS_100KM_DIR):
+    for root, dirs, files in os.walk(AOD_MODIS_5KM_DIR):
         for name in files:
-            if name[-3:].lower() != 'hdf':
+            if name[-3:].lower() != 'tif':
                 continue
-            date_j_str = name.split('.')[1][1:]
-            date_str = datetime.strptime(date_j_str, "%Y%j").strftime("%Y%m")
-            file_dict[date_str].append(os.path.join(root, name))
+            date_str = name.split('-')[1][:6]
+            if frequency == 'monthly':
+                file_dict[date_str[:6]].append(os.path.join(root, name))
+            elif frequency == 'seasonly':
+                season = get_season(date_str[:6])
+                if season is not None:
+                    file_dict[season].append(os.path.join(root, name))
+            elif frequency == 'all':
+                file_dict['all'].append(os.path.join(root, name))
+            else:
+                continue
 
-    for season, files in file_dict.items():
+    for d_, files in file_dict.items():
         aod_sum = None
         aod_count = None
-        filename_out = 'AOD_MODIS_10KM_MEAN_{}_{}.HDF'.format(frequency, season)
+        filename_out = 'AOD_MODIS_10KM_MEAN_{}_{}.HDF'.format(frequency, d_)
         dir_out = os.path.join(AOD_MEAN_DIR, 'AOD_MEAN_MODIS_10KM', frequency.upper())
         file_out = os.path.join(dir_out, filename_out)
         # if os.path.isfile(file_out):
         #     print('already exist {}'.format(file_out))
         #     continue
 
+        print('<<< {}'.format(d_))
         for file_ in files:
             print('<<< {}'.format(file_))
-            loader = AodModis100km(file_)
-            aod = loader.get_aod()  # 无效值赋值为-999
+            loader = Dataset(file_)
+            aod = loader.get_data(1)  # 无效值赋值为-999
+
             if aod is None:
                 print('aod 为 None: {}'.format(file_))
                 continue
-            aod = aod[1]
+
+            valid = np.logical_and(aod > 0, aod < 1500)
+            aod[valid] = aod[valid] / 1000.
+            aod[~valid] = -999
+            # print(np.nanmin(aod), np.nanmax(aod), np.nanmean(aod))
             aod_sum, aod_count = get_sum_count(aod_sum, aod_count, aod)
         if aod_sum is not None and aod_count is not None:
             aod_mean = get_mean(aod_sum, aod_count)
@@ -97,19 +109,13 @@ def mean_modis_100km(frequency='monthly'):
             continue
 
         make_sure_path_exists(dir_out)
-        lon, lat = AodModis100km.get_lon_lat()
-        lon = lon.reshape(-1, 1)
-        lat = lat.reshape(-1, 1)
-        aod_mean = aod_mean.reshape(-1, 1)
-        lat_lon = np.concatenate((lat, lon), axis=1)
-        lon_5km, lat_5km = AodModis100km.get_lon_lat_5km()
-        aod_mean_5km = griddata(lat_lon, aod_mean, (lat_5km, lon_5km), method='cubic')
+        loader = Dataset(files[0])
+        lon, lat = loader.get_lon_lat()
         data_write = {
-            'aod_mean': aod_mean_5km[:, :, 0],
-            'lon': lon_5km,
-            'lat': lat_5km
+            'aod_mean': aod_mean,
+            'lon': lon,
+            'lat': lat
         }
-
         write_hdf5_and_compress(data_write, file_out)
 
 
@@ -126,19 +132,22 @@ def mean_fy3d_5km(frequency='monthly'):
                 season = get_season(date_str[:6])
                 if season is not None:
                     file_dict[season].append(os.path.join(root, name))
+            elif frequency == 'all':
+                file_dict['all'].append(os.path.join(root, name))
             else:
                 continue
 
-    for season, files in file_dict.items():
+    for d_, files in file_dict.items():
         aod_sum = None
         aod_count = None
-        filename_out = 'AOD_FY3D_5KM_MEAN_{}_{}.HDF'.format(frequency, season)
+        filename_out = 'AOD_FY3D_5KM_MEAN_{}_{}.HDF'.format(frequency, d_)
         dir_out = os.path.join(AOD_MEAN_DIR, 'AOD_MEAN_FY3D_5KM', frequency.upper())
         file_out = os.path.join(dir_out, filename_out)
         if os.path.isfile(file_out):
             print('already exist {}'.format(file_out))
             continue
 
+        print('<<< {}'.format(d_))
         for file_ in files:
             print('<<< {}'.format(file_))
             loader = AodFy3d5km(file_)
@@ -165,5 +174,8 @@ def mean_fy3d_5km(frequency='monthly'):
 
 if __name__ == '__main__':
     # mean_fy3d_5km('monthly')
-    mean_modis_100km('monthly')
-
+    # mean_fy3d_5km('seasonly')
+    # mean_fy3d_5km('all')
+    mean_modis_10km('monthly')
+    mean_modis_10km('seasonly')
+    mean_modis_10km('all')

@@ -13,9 +13,21 @@ from DV.dv_map import dv_map
 from pylab import *
 
 
+def get_season(ym):
+    season = {
+        '201812': '2018 DJF',
+        '201903': '2019 MAM',
+        '201906': '2019 JJA',
+        '201909': '2019 SON',
+        '201912': '2019 DJF',
+        '202003': '2020 MAM',
+    }
+    return season[ym]
+
+
 # ############################################## mean map ############################################
 
-def plot_map_mean_5km(frequency='monthly'):
+def plot_map_mean(frequency='monthly'):
     dir_out = os.path.join(AOD_MEAN_DIR, SATELLITE, frequency.upper())
     print("<<< {}".format(dir_out))
     filenames = os.listdir(dir_out)
@@ -23,10 +35,25 @@ def plot_map_mean_5km(frequency='monthly'):
     for aod_mean_file in files:
         print("<<< {}".format(aod_mean_file))
 
+        if 'FY3D' in SATELLITE:
+            sate_ = "FY3D MERSI"
+        elif 'MODIS' in SATELLITE:
+            sate_ = "AQUA MODIS"
+        else:
+            sate_ = ''
         month = os.path.basename(aod_mean_file).split('_')[5][:6]
 
-        box = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0], LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（小），南（大），东（大），西（小）
-        title = '{} {}'.format(month, AREA)
+        if frequency == 'monthly':
+            d_ = month
+        elif frequency == 'seasonly':
+            d_ = get_season(month)
+        elif frequency == 'all':
+            d_ = '201901-202005'
+        else:
+            d_ = ''
+
+        box_ = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0], LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（小），南（大），东（大），西（小）
+        title_ = '{} {} AOD (550nm) over {}'.format(d_, sate_, AREA)
         vmin = 0
         vmax = 1.5
         markersize = 5
@@ -47,6 +74,8 @@ def plot_map_mean_5km(frequency='monthly'):
         longitude = lons
         value = aod
         out_file = file_out
+        valid = np.logical_and(aod > 0, aod < 1.5)
+        aod[~valid] = np.nan
 
         # 开始画图-----------------------
 
@@ -76,12 +105,22 @@ def plot_map_mean_5km(frequency='monthly'):
         p.colormap = plt.get_cmap('jet')  # mpl.cm.rainbow, summer
         # p.colorbar_extend = "max"
 
-        if AREA == 'ChangSanJiao':
-            print('设置地区')
-            p.set_area(["江苏省", "安徽省", "浙江省", "上海市"])
-
         # plot
-        p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax, box=box, markersize=markersize, ptype="pcolormesh")
+        p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax, box=box_, markersize=markersize, ptype="pcolormesh")
+
+        print('设置地区 ：{}'.format(AREA))
+        if AREA == 'YRD':
+            citys = ["江苏省", "安徽省", "浙江省", "上海市"]
+        elif AREA == 'BTH':
+            citys = ["北京市", "天津市", "河北省"]
+        elif AREA == 'FWP':
+            citys = ["陕西省", "山西省", "河南省"]
+        elif AREA == 'FWP':
+            citys = ["广东省"]
+        else:
+            citys = []
+        for city in citys:
+            p.city_boundary(city, linewidth=1.2, shape_name='中国省级行政区')
 
         # 色标 ---------------------------
         cb_loc = [0.12, 0.07, 0.76, 0.03]
@@ -92,7 +131,8 @@ def plot_map_mean_5km(frequency='monthly'):
         #                       unit="(1E16 molec/cm^2)",
         #                       fontsize=fontsize)
         c_ax = fig.add_axes(cb_loc)
-        cbar = fig.colorbar(p.cs, cax=c_ax, orientation='horizontal')
+        # cbar = fig.colorbar(p.cs, cax=c_ax, ticks=np.arange(0, 1.6, 0.3), orientation='horizontal')
+        fig.colorbar(p.cs, cax=c_ax, ticks=np.arange(0, 1.6, 0.3), orientation='horizontal')
         for l in c_ax.xaxis.get_ticklabels():
             l.set_fontproperties(p.font_mid)
             l.set_fontsize(fontsize)
@@ -103,7 +143,7 @@ def plot_map_mean_5km(frequency='monthly'):
         #                   fontproperties=p.font_mid, fontsize=fontsize)
 
         # 标题 ---------------------------
-        p.w_title = p.suptitle(title, fontsize=14, y=0.97)
+        p.w_title = p.suptitle(title_, fontsize=14, y=0.97)
 
         # save
         p.savefig(out_file, dpi=300)
@@ -112,28 +152,32 @@ def plot_map_mean_5km(frequency='monthly'):
 
 
 if __name__ == '__main__':
-    for SATELLITE in ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM']:
-        AREAs = ['ChangSanJiao', 'ZhuSanJiao', 'FenWei', 'JingJinJi']
+    # SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM']
+    SATELLITEs = ['AOD_MEAN_MODIS_10KM']
+    for SATELLITE in SATELLITEs:
+        AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
 
         for AREA in AREAs:
 
             if AREA == 'China':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_China
                 LATITUDE_RANGE = LATITUDE_RANGE_China
-            elif AREA == 'ChangSanJiao':
+            elif AREA == 'YRD':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_ChangSanJiao
                 LATITUDE_RANGE = LATITUDE_RANGE_ChangSanJiao
-            elif AREA == 'ZhuSanJiao':
+            elif AREA == 'PRD':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_ZhuSanJiao
                 LATITUDE_RANGE = LATITUDE_RANGE_ZhuSanJiao
-            elif AREA == 'FenWei':
+            elif AREA == 'FWP':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_FenWei
                 LATITUDE_RANGE = LATITUDE_RANGE_FenWei
-            elif AREA == 'JingJinJi':
+            elif AREA == 'BTH':
                 LONGITUDE_RANGE = LONGITUDE_RANGE_JingJinJi
                 LATITUDE_RANGE = LATITUDE_RANGE_JingJinJi
             else:
                 LONGITUDE_RANGE = None
                 LATITUDE_RANGE = None
 
-            plot_map_mean_5km(frequency='monthly')
+            plot_map_mean(frequency='monthly')
+            plot_map_mean(frequency='seasonly')
+            plot_map_mean(frequency='all')
