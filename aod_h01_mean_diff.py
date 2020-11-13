@@ -11,7 +11,8 @@ from scipy.interpolate import griddata
 
 from lib.path import *
 from lib.aod import *
-from lib.hdf5 import write_hdf5_and_compress
+from lib.hdf5 import write_hdf5_and_compress, get_hdf5_data
+from lib.proj import ProjCore, meter2degree
 
 from config import *
 
@@ -172,10 +173,81 @@ def mean_fy3d_5km(frequency='monthly'):
         write_hdf5_and_compress(data_write, file_out)
 
 
+def diff_mersi_modis(frequency='monthly'):
+    dir_out = os.path.join(AOD_MEAN_DIR, 'AOD_DIFF_MERSI_MODIS', frequency.upper())
+    print("dir_out <<< : {}".format(dir_out))
+
+    dir_out1 = os.path.join(AOD_MEAN_DIR, 'AOD_MEAN_FY3D_5KM', frequency.upper())
+    print("dir_out1 <<< : {}".format(dir_out1))
+    filenames = os.listdir(dir_out1)
+    files1 = [os.path.join(dir_out1, x) for x in filenames]
+
+    dir_out2 = os.path.join(AOD_MEAN_DIR, 'AOD_MEAN_MODIS_10KM', frequency.upper())
+    print("dir_out2 <<< : {}".format(dir_out2))
+    filenames = os.listdir(dir_out2)
+    files2 = [os.path.join(dir_out2, x) for x in filenames]
+
+    for aod_file1 in files1:
+        d_1 = os.path.basename(aod_file1).split('_')[5][:6]
+        for aod_file2 in files2:
+            d_2 = os.path.basename(aod_file2).split('_')[5][:6]
+            if d_1 != d_2:
+                continue
+            else:
+                d_ = d_1
+            print('aod_file1 <<< : {}'.format(aod_file1))
+            print('aod_file2 <<< : {}'.format(aod_file2))
+
+            aod1 = get_hdf5_data(aod_file1, 'aod_mean', 1, 0, [0, 1.5], np.nan)
+            lons1 = get_hdf5_data(aod_file1, 'lon', 1, 0, [-180, 180])
+            lats1 = get_hdf5_data(aod_file1, 'lat', 1, 0, [-90, 90])
+
+            aod2 = get_hdf5_data(aod_file2, 'aod_mean', 1, 0, [0, 1.5], np.nan)
+            lons2 = get_hdf5_data(aod_file2, 'lon', 1, 0, [-180, 180])
+            lats2 = get_hdf5_data(aod_file2, 'lat', 1, 0, [-90, 90])
+
+            # 创建投影查找表
+            print('创建投影查找表')
+            res_degree = meter2degree(10000)  # 分辨率，10km
+            projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+            proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 55.995), pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
+
+            result1 = proj.create_lut(lats=lats1, lons=lons1)
+            result2 = proj.create_lut(lats=lats2, lons=lons2)
+
+            print('投影')
+            # 创建投影之后的经纬度
+            lons_proj, lats_proj = proj.grid_lonslats()
+
+            # 投影，并且获取投影之后的结果
+            aod1_proj = np.full_like(lons_proj, np.nan)  # 可以直接使用proj的row，col进行优化
+            aod1_proj[result1['prj_i'], result1['prj_j']] = aod1[result1['pre_i'], result1['pre_j']]
+
+            aod2_proj = np.full_like(lons_proj, np.nan)  # 可以直接使用proj的row，col进行优化
+            aod2_proj[result2['prj_i'], result2['prj_j']] = aod2[result2['pre_i'], result2['pre_j']]
+
+            aod_dif = np.full_like(lons_proj, -999)
+            match_idx = np.logical_and(np.isfinite(aod1_proj), np.isfinite(aod2_proj))
+            aod_dif[match_idx] = aod1_proj[match_idx] - aod2_proj[match_idx]
+
+            result = {
+                'aod_mean': aod_dif,
+                'lon': lons_proj,
+                'lat': lats_proj
+            }
+            filename_out = 'AOD_DIFF_MERSI_MODIS_{}_{}.HDF'.format(frequency, d_)
+            file_out = os.path.join(dir_out, filename_out)
+            make_sure_path_exists(dir_out)
+            write_hdf5_and_compress(result, file_out)
+
+
 if __name__ == '__main__':
     # mean_fy3d_5km('monthly')
     # mean_fy3d_5km('seasonly')
     # mean_fy3d_5km('all')
-    mean_modis_10km('monthly')
-    mean_modis_10km('seasonly')
-    mean_modis_10km('all')
+    # mean_modis_10km('monthly')
+    # mean_modis_10km('seasonly')
+    # mean_modis_10km('all')
+    diff_mersi_modis('monthly')
+    diff_mersi_modis('seasonly')
+    diff_mersi_modis('all')

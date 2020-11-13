@@ -29,7 +29,7 @@ def get_season(ym):
 
 def plot_map_mean(frequency='monthly'):
     dir_out = os.path.join(AOD_MEAN_DIR, SATELLITE, frequency.upper())
-    print("<<< {}".format(dir_out))
+    print("dir_out <<< {}".format(dir_out))
     filenames = os.listdir(dir_out)
     files = [os.path.join(dir_out, x) for x in filenames]
     for aod_mean_file in files:
@@ -53,12 +53,20 @@ def plot_map_mean(frequency='monthly'):
             d_ = ''
 
         box_ = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0], LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（小），南（大），东（大），西（小）
-        title_ = '{} {} AOD (550nm) over {}'.format(d_, sate_, AREA)
-        vmin = 0
-        vmax = 1.5
+        if 'MERSI' in SATELLITE and 'MODIS' in SATELLITE:
+            title_ = '{} Diff.(MERSI-MODIS) AOD over {}'.format(d_, AREA)
+            vmin = -0.5
+            vmax = 0.5
+            ticks = np.arange(-0.5, 0.51, 0.1)
+        else:
+            title_ = '{} {} AOD (550nm) over {}'.format(d_, sate_, AREA)
+            vmin = 0
+            vmax = 1.5
+            ticks = np.arange(0, 1.6, 0.3)
+
         markersize = 5
         filename_out = '{}_'.format(AREA) + os.path.basename(aod_mean_file) + '.png'
-        dir_out = os.path.join(AOD_MAP_DIR, SATELLITE, frequency.upper())
+        dir_out = os.path.join(AOD_PICTURE_DIR, 'MAP', SATELLITE, frequency.upper())
         file_out = os.path.join(dir_out, filename_out)
 
         # 是否重处理
@@ -66,16 +74,17 @@ def plot_map_mean(frequency='monthly'):
         #     print('already exist {}'.format(file_out))
         #     continue
 
-        aod = get_hdf5_data(aod_mean_file, 'aod_mean', 1, 0, [0, 1.5])
+        aod = get_hdf5_data(aod_mean_file, 'aod_mean', 1, 0, [vmin, vmax], np.nan)
         lons = get_hdf5_data(aod_mean_file, 'lon', 1, 0, [-180, 180])
         lats = get_hdf5_data(aod_mean_file, 'lat', 1, 0, [-90, 90])
+        print(np.nanmin(aod), np.nanmax(aod), np.nanmean(aod))
 
         latitude = lats
         longitude = lons
         value = aod
         out_file = file_out
-        valid = np.logical_and(aod > 0, aod < 1.5)
-        aod[~valid] = np.nan
+        valid = np.logical_and(aod > vmin, aod < vmax)
+        value[~valid] = np.nan
 
         # 开始画图-----------------------
 
@@ -132,7 +141,7 @@ def plot_map_mean(frequency='monthly'):
         #                       fontsize=fontsize)
         c_ax = fig.add_axes(cb_loc)
         # cbar = fig.colorbar(p.cs, cax=c_ax, ticks=np.arange(0, 1.6, 0.3), orientation='horizontal')
-        fig.colorbar(p.cs, cax=c_ax, ticks=np.arange(0, 1.6, 0.3), orientation='horizontal')
+        fig.colorbar(p.cs, cax=c_ax, ticks=ticks, orientation='horizontal')
         for l in c_ax.xaxis.get_ticklabels():
             l.set_fontproperties(p.font_mid)
             l.set_fontsize(fontsize)
@@ -152,8 +161,8 @@ def plot_map_mean(frequency='monthly'):
 
 
 if __name__ == '__main__':
-    # SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM']
-    SATELLITEs = ['AOD_MEAN_MODIS_10KM']
+    SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
+    # SATELLITEs = ['AOD_DIFF_MERSI_MODIS']
     for SATELLITE in SATELLITEs:
         AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
 

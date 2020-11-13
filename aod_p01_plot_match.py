@@ -111,16 +111,16 @@ def plot_verification_picture(date_str, date_end=None, frequency='daily'):
     elif frequency == 'seasonly':
         date_str = date_str[:6]
 
-    picture_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA)
+    picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
     if frequency == 'all':
-        out_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA, 'TIMESERIES')
+        out_dir = os.path.join(picture_dir, 'TIMESERIES')
         out_file = os.path.join(out_dir, 'regression_{}_{}_{}_{}.png'.format(AREA, frequency, _date_start, _date_end))
     else:
         out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
         out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
-    # if os.path.isfile(out_file):
-    #     print('already exist {}'.format(out_file))
-    #     return
+    if os.path.isfile(out_file):
+        print('already exist {}'.format(out_file))
+        return
 
     data = get_match_data(date_str, frequency=frequency)
     if data is None:
@@ -209,7 +209,8 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
     elif frequency == 'seasonly':
         date_str = date_str[:6]
 
-    out_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA, 'TIMESERIES')
+    picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
+    out_dir = os.path.join(picture_dir, 'TIMESERIES')
     file_out = os.path.join(out_dir, 'r2_map_{}_{}_{}.png'.format(AREA, frequency, date_str))
     # if os.path.isfile(file_out):
     #     print('already exist {}'.format(file_out))
@@ -237,16 +238,10 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
     res_degree = meter2degree(10000)  # 分辨率，10km
     projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 55.995), pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
-    result = proj.create_lut(lats=lats, lons=lons)
 
     # 投影
     print('投影')
     ii, jj = proj.lonslats2ij(lons, lats)
-
-    # 投影新网格的经纬度信息
-    print('投影新网格的经纬度信息')
-    result['Longitude'] = proj.lons
-    result['Latitude'] = proj.lats
 
     # 网格数据统计
     print('网格数据统计')
@@ -255,8 +250,7 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
         data_dict[(i, j)].append((x, y))
 
     # 新的网格的经纬度
-    proj.grid_lonslats()
-    lats_grid, lons_grid = proj.lats, proj.lons
+    lats_grid, lons_grid = proj.grid_lonslats()
 
     # 绘图
     print('绘图')
@@ -372,13 +366,14 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     for i in data.date:
         x.append(datestr2datetime(i))
 
-    out_dir = os.path.join(RESULT_DIR, 'PICTURE', AREA, 'TIMESERIES')
+    picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
+    out_dir = os.path.join(picture_dir, 'TIMESERIES')
 
     # ================================ plot BIAS
     y = data.bias_mean
     y_label = 'BIAS'
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{}-{} Diff.(MERSI-MODIS) over {}'.format(date_start, date_end, AREA)
+    title = '{}-{} Diff.(MERSI-MODIS) AOD over {}'.format(date_start, date_end, AREA)
     y_range = [-0.5, 0.5]
     y_interval = 0.1
     # if not os.path.isfile(out_file):
@@ -447,8 +442,9 @@ if __name__ == '__main__':
     if args.match is not None:
         MATCHES = [args.match]
     else:
-        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
-        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
+        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
+        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
+        # MATCHES = ['AOD_FY3D_1KM_FY4A_4KM']
 
     for MATCH in MATCHES:
 
@@ -502,8 +498,8 @@ if __name__ == '__main__':
             multi_plot_regression(_date_start, _date_end, 'monthly')
             multi_plot_regression('20181201', _date_end, 'seasonly')
 
-            # multi_plot_map(_date_start, _date_end, 'monthly')
-            # multi_plot_map('20181201', _date_end, 'seasonly')
+            multi_plot_map(_date_start, _date_end, 'monthly')
+            multi_plot_map('20181201', _date_end, 'seasonly')
             multi_plot_map(_date_start, _date_end, 'all')
 
             multi_plot_regression(_date_start, _date_end, 'all')
