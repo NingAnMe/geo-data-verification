@@ -250,7 +250,7 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
         data_dict[(i, j)].append((x, y))
 
     # 新的网格的经纬度
-    lats_grid, lons_grid = proj.grid_lonslats()
+    lons_grid, lats_grid = proj.grid_lonslats()
 
     # 绘图
     print('绘图')
@@ -259,6 +259,7 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
     r2_plot = list()
     r2_grid = np.full_like(lats_grid, np.nan, dtype=np.float)
     for (i, j), aod_x_y in data_dict.items():
+        print(aod_x_y)
         xs = list()
         ys = list()
         for x, y in aod_x_y:
@@ -470,7 +471,7 @@ if __name__ == '__main__':
             _date_start = "20190101"
             _date_end = "20200531"
 
-        AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
+        AREAs = ['China', 'YRD', 'PRD', 'FWP', 'BTH']
 
         for AREA in AREAs:
 
@@ -493,13 +494,13 @@ if __name__ == '__main__':
                 LONGITUDE_RANGE = None
                 LATITUDE_RANGE = None
 
-            multi_plot_regression(_date_start, _date_end, 'daily')
-            plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一边，用户改为对齐
-            multi_plot_regression(_date_start, _date_end, 'monthly')
-            multi_plot_regression('20181201', _date_end, 'seasonly')
+            # multi_plot_regression(_date_start, _date_end, 'daily')
+            # plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一边，用户改为对齐
+            # multi_plot_regression(_date_start, _date_end, 'monthly')
+            # multi_plot_regression('20181201', _date_end, 'seasonly')
 
-            multi_plot_map(_date_start, _date_end, 'monthly')
-            multi_plot_map('20181201', _date_end, 'seasonly')
+            # multi_plot_map(_date_start, _date_end, 'monthly')
+            # multi_plot_map('20181201', _date_end, 'seasonly')
             multi_plot_map(_date_start, _date_end, 'all')
 
-            multi_plot_regression(_date_start, _date_end, 'all')
+            # multi_plot_regression(_date_start, _date_end, 'all')
