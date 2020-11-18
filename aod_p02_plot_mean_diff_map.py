@@ -32,6 +32,15 @@ def plot_map_mean(frequency='monthly'):
     print("dir_out <<< {}".format(dir_out))
     filenames = os.listdir(dir_out)
     files = [os.path.join(dir_out, x) for x in filenames]
+
+    mode = None
+    if 'MEAN' in SATELLITE:
+        mode = 'MEAN'
+    elif 'DIFF' in SATELLITE:
+        mode = 'DIFF'
+    else:
+        assert KeyError('不支持的绘图类型')
+
     for aod_mean_file in files:
         print("<<< {}".format(aod_mean_file))
 
@@ -111,7 +120,10 @@ def plot_map_mean(frequency='monthly'):
         # set color map
         p.valmin = vmin
         p.valmax = vmax
-        p.colormap = plt.get_cmap('jet')  # mpl.cm.rainbow, summer
+        if mode == 'MEAN':
+            p.colormap = plt.get_cmap('jet')  # mpl.cm.rainbow, summer, jet, bwr
+        elif mode == 'DIFF':
+            p.colormap = plt.get_cmap('bwr')
         # p.colorbar_extend = "max"
 
         # plot
@@ -161,8 +173,8 @@ def plot_map_mean(frequency='monthly'):
 
 
 if __name__ == '__main__':
-    SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
-    # SATELLITEs = ['AOD_DIFF_MERSI_MODIS']
+    # SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
+    SATELLITEs = ['AOD_DIFF_MERSI_MODIS']
     for SATELLITE in SATELLITEs:
         AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
 
