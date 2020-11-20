@@ -70,13 +70,6 @@ def match_fy3d_5km_modis_10km(aod_fy3d_5km_file, aod_modis_10km_file, aod_fy3d_5
             lons2 = lons2[range_index2]
             lats2 = lats2[range_index2]
 
-    print(data1.shape)
-    print(lons1.shape)
-    print(lats1.shape)
-    print(data2.shape)
-    print(lons2.shape)
-    print(lats2.shape)
-
     data_kdtree, lons_kdtree, lats_kdtree = data2, lons2, lats2
     data_query, lons_query, lats_query = data1, lons1, lats1
 
