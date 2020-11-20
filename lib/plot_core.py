@@ -198,11 +198,11 @@ class PlotAx(object):
         pos = np.vstack([x, y])
         kernel = stats.gaussian_kde(pos)
         color = kernel.evaluate(pos)
-        color = color / 100  # 除100，归一化为0-1之间的值
-        norm = plt.Normalize()
-        norm.autoscale(color)
+        # color = color / 100  # 除100，变为小数
+        # norm = plt.Normalize()
+        # norm.autoscale(color)
         cmap = plt.get_cmap('jet')
-        r = ax.scatter(x, y, c=color, norm=norm, s=marker_size, marker=marker,
+        r = ax.scatter(x, y, c=color, s=marker_size, marker=marker,
                        cmap=cmap, lw=0,
                        alpha=alpha, zorder=zorder)
         return r
