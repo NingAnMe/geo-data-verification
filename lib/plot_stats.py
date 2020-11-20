@@ -97,7 +97,7 @@ def plot_regression(
     # ##### 画对角线
     color = '#808080'
     linewidth = 1.2
-    zorder = 70
+    zorder = 90
     plot_ax.plot_diagonal_line(ax1, x, y, x_range, y_range, color, linewidth, zorder=zorder)
 
     # ##### 格式化图片
