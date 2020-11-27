@@ -69,9 +69,14 @@ def plot_map_mean(frequency='monthly'):
             ticks = np.arange(-0.5, 0.51, 0.1)
         else:
             title_ = '{} {} AOD (550nm) over {}'.format(d_, sate_, AREA)
-            vmin = 0
-            vmax = 1.5
-            ticks = np.arange(0, 1.6, 0.3)
+            if frequency == 'all':
+                vmin = 0
+                vmax = 0.8
+                ticks = np.arange(0, 0.9, 0.2)
+            else:
+                vmin = 0
+                vmax = 1.5
+                ticks = np.arange(0, 1.6, 0.3)
 
         markersize = 5
         filename_out = '{}_'.format(AREA) + os.path.basename(aod_mean_file) + '.png'
@@ -111,8 +116,12 @@ def plot_map_mean(frequency='monthly'):
         p.show_inside_china = True
         p.show_inside_china_mini = False
 
-        p.delat = 2  # 纬度刻度线分辨率
-        p.delon = 2  # 经度刻度线分辨率
+        if AREA.lower() == 'china':
+            p.delat = 5  # 纬度刻度线分辨率
+            p.delon = 10  # 经度刻度线分辨率
+        else:
+            p.delat = 2  # 纬度刻度线分辨率
+            p.delon = 2  # 经度刻度线分辨率
         p.color_coast = "#3a3a3a"  # 海岸线颜色
         p.color_contry = "#3a3a3a"  # 国家颜色
         p.fontsize_tick = 15
@@ -173,10 +182,11 @@ def plot_map_mean(frequency='monthly'):
 
 
 if __name__ == '__main__':
-    # SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
-    SATELLITEs = ['AOD_DIFF_MERSI_MODIS']
+    SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
+    # SATELLITEs = ['AOD_MEAN_FY3D_1KM_FILTER']
     for SATELLITE in SATELLITEs:
-        AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
+        # AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
+        AREAs = ['China']
 
         for AREA in AREAs:
 
