@@ -225,6 +225,7 @@ class PlotAx(object):
             x_max = np.nanmax(x)
         ax.plot([x_min, x_max], [x_min * a + b, x_max * a + b],
                 color=color, linewidth=linewidth, zorder=zorder)
+        return ab
 
     @classmethod
     def plot_diagonal_line(cls, ax, x=None, y=None, x_range=None, y_range=None,
