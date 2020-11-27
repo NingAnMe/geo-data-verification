@@ -118,9 +118,9 @@ def plot_verification_picture(date_str, date_end=None, frequency='daily'):
     else:
         out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
         out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
-    if os.path.isfile(out_file):
-        print('already exist {}'.format(out_file))
-        return
+    # if os.path.isfile(out_file):
+    #     print('already exist {}'.format(out_file))
+    #     return
 
     data = get_match_data(date_str, frequency=frequency)
     if data is None:
@@ -374,7 +374,7 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     y = data.bias_mean
     y_label = 'BIAS'
     out_file = os.path.join(out_dir, 'timeseries_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
-    title = '{}-{} Diff.(MERSI-MODIS) AOD over {}'.format(date_start, date_end, AREA)
+    title = '{}-{} BIAS AOD over {}'.format(date_start, date_end, AREA)
     y_range = [-0.5, 0.5]
     y_interval = 0.1
     # if not os.path.isfile(out_file):
@@ -418,8 +418,8 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     y = data.bias_mean
     x_range = [-0.5, 0.5]
     y_range = [0, 50]
-    title = '{}-{} Diff.(MERSI-MODIS) AOD over YRD'.format(date_start, date_end, AREA)
-    x_label = 'Diff.(MERSI-MODIS)'
+    title = '{}-{} Hist BIAS AOD over {}'.format(date_start, date_end, AREA)
+    x_label = 'BIAS'
     y_label = 'Count'
     out_file = os.path.join(out_dir, 'histogram_{}_{}_BIAS_{}_{}.png'.format(AREA, frequency, date_start, date_end))
     # if not os.path.isfile(out_file):
@@ -443,8 +443,8 @@ if __name__ == '__main__':
     if args.match is not None:
         MATCHES = [args.match]
     else:
-        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
-        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
+        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
+        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
         # MATCHES = ['AOD_FY3D_1KM_FY4A_4KM']
 
     for MATCH in MATCHES:
@@ -471,7 +471,7 @@ if __name__ == '__main__':
             _date_start = "20190101"
             _date_end = "20200531"
 
-        AREAs = ['China', 'YRD', 'PRD', 'FWP', 'BTH']
+        AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
 
         for AREA in AREAs:
 
@@ -495,12 +495,12 @@ if __name__ == '__main__':
                 LATITUDE_RANGE = None
 
             # multi_plot_regression(_date_start, _date_end, 'daily')
-            # plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一边，用户改为对齐
+            plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一遍，用户改为对齐
             # multi_plot_regression(_date_start, _date_end, 'monthly')
             # multi_plot_regression('20181201', _date_end, 'seasonly')
 
             # multi_plot_map(_date_start, _date_end, 'monthly')
             # multi_plot_map('20181201', _date_end, 'seasonly')
-            multi_plot_map(_date_start, _date_end, 'all')
+            # multi_plot_map(_date_start, _date_end, 'all')
 
             # multi_plot_regression(_date_start, _date_end, 'all')
