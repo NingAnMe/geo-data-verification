@@ -179,13 +179,14 @@ def plot_map_mean(frequency='monthly'):
         p.savefig(out_file, dpi=300)
         print(">>> {}".format(out_file))
         p.clean()
+        break
 
 
 if __name__ == '__main__':
-    SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
-    # SATELLITEs = ['AOD_MEAN_FY3D_1KM_FILTER']
+    # SATELLITEs = ['AOD_MEAN_FY3D_5KM', 'AOD_MEAN_MODIS_10KM', 'AOD_DIFF_MERSI_MODIS']
+    SATELLITEs = ['AOD_MEAN_MODIS_5KM']
     for SATELLITE in SATELLITEs:
-        # AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
+        # AREAs = ['China', 'YRD', 'PRD', 'FWP', 'BTH']
         AREAs = ['China']
 
         for AREA in AREAs:
