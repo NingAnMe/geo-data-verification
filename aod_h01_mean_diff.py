@@ -61,6 +61,98 @@ def get_mean(aod_sum, aod_count):
     return aod_mean
 
 
+def mean_modis_10kmto5km(frequency='monthly'):
+    file_dict = defaultdict(list)
+    for root, dirs, files in os.walk(AOD_MODIS_10KM_DIR):
+        for name in files:
+            if name[-3:].lower() != 'hdf':
+                continue
+
+            date_str_file = name[10:17]
+            date_ = datetime.strptime(date_str_file, "%Y%j")
+            if date_ > datetime(2020, 6, 1):
+                continue
+            date_str = date_.strftime("%Y%m")
+
+            if frequency == 'monthly':
+                file_dict[date_str[:6]].append(os.path.join(root, name))
+            elif frequency == 'seasonly':
+                season = get_season(date_str[:6])
+                if season is not None:
+                    file_dict[season].append(os.path.join(root, name))
+            elif frequency == 'all':
+                file_dict['all'].append(os.path.join(root, name))
+            else:
+                continue
+
+    # 创建投影查找表
+    print('创建投影查找表')
+    res_degree = 0.05  # 分辨率，5km
+    projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+    proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 55.995), pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
+
+    for d_, files in file_dict.items():
+        aod_sum = np.zeros((proj.row, proj.col), dtype=np.float)
+        aod_count = np.zeros_like(aod_sum, dtype=np.float)
+        filename_out = 'AOD_MODIS_5KM_MEAN_{}_{}.HDF'.format(frequency, d_)
+        dir_out = os.path.join(AOD_MEAN_DIR, 'AOD_MEAN_MODIS_5KM', frequency.upper())
+        file_out = os.path.join(dir_out, filename_out)
+        # if os.path.isfile(file_out):
+        #     print('already exist {}'.format(file_out))
+        #     continue
+
+        print('<<< {}'.format(d_))
+        for file_ in files:
+            print('<<< {}'.format(file_))
+
+            modis_10km = AodModis(file_)
+            aod = modis_10km.get_aod()
+            lons, lats = modis_10km.get_lon_lat()
+            print(np.nanmin(aod), np.nanmax(aod), np.nanmean(aod))
+            if aod is None:
+                print('aod 为 None: {}'.format(file_))
+                continue
+
+            # 投影
+            print('投影')
+            ii, jj = proj.lonslats2ij(lons, lats)
+            valid = np.logical_and.reduce((ii >= 0, ii < proj.row,
+                                           jj >= 0, jj < proj.col,
+                                           aod > 0, aod < 1.5,
+                                           ))
+            if valid.sum() == 0:
+                print('valid.size == 0, continue')
+                continue
+            print('valid.sum() == {}'.format(valid.sum()))
+
+            ii = ii[valid]
+            jj = jj[valid]
+            aod = aod[valid]
+            aod_sum[ii, jj] += aod
+            aod_count[ii, jj] += 1
+
+            print(np.nanmin(aod), np.nanmax(aod), np.nanmean(aod))
+            print(np.nanmin(aod_sum), np.nanmax(aod_sum), np.nanmean(aod_sum))
+        if aod_sum is not None and aod_count is not None:
+            aod_mean = get_mean(aod_sum, aod_count)
+        else:
+            continue
+
+        # 新的网格的经纬度
+        lons_grid, lats_grid = proj.grid_lonslats()
+        make_sure_path_exists(dir_out)
+        print((aod_mean != -999).sum())
+        data_write = {
+            'aod_mean': aod_mean,
+            # 'aod_sum': aod_sum,
+            # 'aod_count': aod_count,
+            'lon': lons_grid,
+            'lat': lats_grid
+        }
+        write_hdf5_and_compress(data_write, file_out)
+        break
+
+
 def mean_modis_10km(frequency='monthly'):
     file_dict = defaultdict(list)
     for root, dirs, files in os.walk(AOD_MODIS_5KM_DIR):
@@ -210,7 +302,8 @@ def diff_mersi_modis(frequency='monthly'):
             print('创建投影查找表')
             res_degree = meter2degree(10000)  # 分辨率，10km
             projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-            proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 55.995), pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
+            proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 55.995),
+                            pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
 
             result1 = proj.create_lut(lats=lats1, lons=lons1)
             result2 = proj.create_lut(lats=lats2, lons=lons2)
@@ -248,6 +341,9 @@ if __name__ == '__main__':
     # mean_modis_10km('monthly')
     # mean_modis_10km('seasonly')
     # mean_modis_10km('all')
-    diff_mersi_modis('monthly')
-    diff_mersi_modis('seasonly')
-    diff_mersi_modis('all')
+    # diff_mersi_modis('monthly')
+    # diff_mersi_modis('seasonly')
+    # diff_mersi_modis('all')
+    mean_modis_10kmto5km('monthly')
+    mean_modis_10kmto5km('seasonly')
+    mean_modis_10kmto5km('all')
