@@ -242,6 +242,20 @@ class PlotAx(object):
                 linewidth=linewidth, zorder=zorder)
 
     @classmethod
+    def plot_bias_line(cls, ax, x=None, x_range=None, color='#FF33E0', linewidth=1.2, zorder=100):
+        if x_range is not None:
+            x_min, x_max = x_range
+        elif x is not None:
+            x_min, x_max = np.min(x), np.max(x)
+        else:
+            return
+        x_ = np.array((x_min, x_max))
+        y_ = x_ * 1.2 + 0.05
+        ax.plot(x_, y_, color=color, linewidth=linewidth, zorder=zorder)
+        y_ = x_ * 0.8 - 0.05
+        ax.plot(x_, y_, color=color, linewidth=linewidth, zorder=zorder)
+
+    @classmethod
     def plot_time_series(cls, ax, data_x, data_y, marker=None, marker_size=None,
                          marker_facecolor=None, marker_edgecolor=None, marker_edgewidth=None,
                          color=None, alpha=None, line_width=None, label=None, zorder=None):

@@ -59,7 +59,8 @@ def plot_regression(
         ymd_start=None,
         ymd_end=None,
         ymd=None,
-        density=False, ):
+        density=False,
+        bias_line=False):
     # style_file = os.path.join('plot_regression.mplstyle')
     # plt.style.use(style_file)
     figsize = (5, 5)
@@ -99,6 +100,13 @@ def plot_regression(
     linewidth = 1.2
     zorder = 90
     plot_ax.plot_diagonal_line(ax1, x, y, x_range, y_range, color, linewidth, zorder=zorder)
+
+    # 画误差线
+    if bias_line:
+        color = '#FF33E0'
+        linewidth = 1.2
+        zorder = 90
+        plot_ax.plot_bias_line(ax1, x, x_range, color, linewidth, zorder)
 
     # ##### 格式化图片
     format_kwargs = {}
