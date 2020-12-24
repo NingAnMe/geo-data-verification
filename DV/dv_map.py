@@ -348,7 +348,7 @@ class dv_map(dv_base):
 
         # 南海小图
         if self.show_china:
-            self.nanhai_minimap(self.nanhai_loc)
+            self.nanhai_minimap()
 
         #         # test
         #         import pickle
@@ -631,7 +631,7 @@ class dv_map(dv_base):
         if self.show_north_pole or self.show_south_pole:
             self._setLatsLabelWithinFig()
 
-    def nanhai_minimap(self, ax_loc):
+    def nanhai_minimap(self):
         # 画南海 十段线
 
         # zoomed_inset_axes 不能 pickle, 所以弃用，换用fig.add_axes 自己设定位置---
@@ -642,7 +642,7 @@ class dv_map(dv_base):
         #         plt.xticks(visible=False)
         #         plt.yticks(visible=False)
         # ---------------------------------------------------------------------
-        ax2 = self.fig.add_axes(ax_loc)
+        ax2 = self.fig.add_axes(self.nanhai_loc)
         plt.setp(ax2.get_yticklabels(), visible=False)
         plt.setp(ax2.get_yticklabels(), visible=False)
 
