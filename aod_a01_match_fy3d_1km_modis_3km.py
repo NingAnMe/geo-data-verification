@@ -21,7 +21,8 @@ import pandas as pd
 from lib.verification import Verification
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d1km, AodModis
-from config import *
+from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
+from config import AOD_FY3D_1KM_DIR, AOD_MODIS_3KM_DIR, GEO_FY3D_1KM_DIR, AOD_FY3D_1KM_MODIS_3KM_DIR
 
 LONGITUDE_RANGE = LONGITUDE_RANGE_China
 LATITUDE_RANGE = LATITUDE_RANGE_China
@@ -41,7 +42,7 @@ def match_fy3d_1km_modis_3km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_modis_3km
     # 获取数据1
     try:
         fy3d_1km = AodFy3d1km(aod_fy3d_1km_file, geo_file=geo_fy3d_1km_file)
-        data1 = fy3d_1km.get_aod()[1]
+        data1 = fy3d_1km.get_aod()
         lons1, lats1 = fy3d_1km.get_lon_lat()
     except Exception as why:
         print(why)
@@ -57,7 +58,17 @@ def match_fy3d_1km_modis_3km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_modis_3km
             lons1 = lons1[range_index1]
             lats1 = lats1[range_index1]
 
-    # 获取数据1
+    # 有效值过滤
+    range_index1 = np.logical_and(data1 > 0, data1 < 1.5)
+    if range_index1.sum() <= 0:
+        print('data1的有效数据不足')
+        return
+    else:
+        data1 = data1[range_index1]
+        lons1 = lons1[range_index1]
+        lats1 = lats1[range_index1]
+
+    # 获取数据2
     modis_3km = AodModis(aod_modis_3km_file)
     data2 = modis_3km.get_aod()
     lons2, lats2 = modis_3km.get_lon_lat()
@@ -72,6 +83,16 @@ def match_fy3d_1km_modis_3km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_modis_3km
             lons2 = lons2[range_index2]
             lats2 = lats2[range_index2]
 
+    # 有效值过滤
+    range_index2 = np.logical_and(data2 > 0, data2 < 1.5)
+    if range_index2.sum() <= 0:
+        print('data2的有效数据不足')
+        return
+    else:
+        data2 = data2[range_index2]
+        lons2 = lons2[range_index2]
+        lats2 = lats2[range_index2]
+
     data_kdtree, lons_kdtree, lats_kdtree = data1, lons1, lats1
     data_query, lons_query, lats_query = data2, lons2, lats2
 
@@ -83,7 +104,7 @@ def match_fy3d_1km_modis_3km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_modis_3km
     verif.get_dist_and_index_kdtree()
 
     # 获取符合距离阈值的点
-    pre_dist = 0.07
+    pre_dist = 0.02
     index_dist = verif.get_index_dist(pre_dist=pre_dist)
 
     # 匹配数据
@@ -177,3 +198,8 @@ def t():
 
 if __name__ == '__main__':
     match_file()
+    """
+    L1数据文件夹：/DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/2FY3D_MERSI_L2_AOD-ORBT-1000M
+    GEO数据文件夹：/DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/2FY3D-MERSI-L1-GEO1K
+    结果输出文件夹：/DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/MATCH_FY3D_1KM_MODIS_3KM
+    """

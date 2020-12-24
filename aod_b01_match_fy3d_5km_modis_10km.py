@@ -10,16 +10,17 @@
 分布图
 时间序列图
 """
+import os
 from datetime import datetime
 from collections import defaultdict
-import os
 import numpy as np
 import pandas as pd
 
 from lib.verification import Verification
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d5km, AodModis
-from config import *
+from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
+from config import AOD_FY3D_5KM_DIR, AOD_MODIS_10KM_DIR, AOD_FY3D_5KM_MODIS_10KM_DIR
 
 LONGITUDE_RANGE = LONGITUDE_RANGE_China
 LATITUDE_RANGE = LATITUDE_RANGE_China
@@ -39,7 +40,7 @@ def match_fy3d_5km_modis_10km(aod_fy3d_5km_file, aod_modis_10km_file, aod_fy3d_5
     # 获取数据1
     try:
         fy3d_5km = AodFy3d5km(aod_fy3d_5km_file)
-        data1 = fy3d_5km.get_aod()[1]
+        data1 = fy3d_5km.get_aod()
         lons1, lats1 = fy3d_5km.get_lon_lat()
     except Exception as why:
         print(why)
@@ -55,7 +56,17 @@ def match_fy3d_5km_modis_10km(aod_fy3d_5km_file, aod_modis_10km_file, aod_fy3d_5
             lons1 = lons1[range_index1]
             lats1 = lats1[range_index1]
 
-    # 获取数据1
+    # 有效值过滤
+    range_index1 = np.logical_and(data1 > 0, data1 < 1.5)
+    if range_index1.sum() <= 0:
+        print('data1的有效数据不足')
+        return
+    else:
+        data1 = data1[range_index1]
+        lons1 = lons1[range_index1]
+        lats1 = lats1[range_index1]
+
+    # 获取数据2
     modis_10km = AodModis(aod_modis_10km_file)
     data2 = modis_10km.get_aod()
     lons2, lats2 = modis_10km.get_lon_lat()
@@ -69,6 +80,16 @@ def match_fy3d_5km_modis_10km(aod_fy3d_5km_file, aod_modis_10km_file, aod_fy3d_5
             data2 = data2[range_index2]
             lons2 = lons2[range_index2]
             lats2 = lats2[range_index2]
+
+    # 有效值过滤
+    range_index2 = np.logical_and(data2 > 0, data2 < 1.5)
+    if range_index2.sum() <= 0:
+        print('data2的有效数据不足')
+        return
+    else:
+        data2 = data2[range_index2]
+        lons2 = lons2[range_index2]
+        lats2 = lats2[range_index2]
 
     data_kdtree, lons_kdtree, lats_kdtree = data2, lons2, lats2
     data_query, lons_query, lats_query = data1, lons1, lats1

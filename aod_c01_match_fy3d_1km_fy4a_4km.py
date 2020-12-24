@@ -10,10 +10,10 @@
 分布图
 时间序列图
 """
+import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from collections import defaultdict
-import os
 import pickle
 import numpy as np
 import pandas as pd
@@ -21,7 +21,8 @@ import pandas as pd
 from lib.verification import Verification
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d1km, AodFy4a4km
-from config import *
+from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
+from config import AOD_FY3D_1KM_DIR, AOD_FY4A_4KM_DIR, GEO_FY3D_1KM_DIR, AOD_FY3D_1KM_FY4A_4KM_DIR
 
 LONGITUDE_RANGE = LONGITUDE_RANGE_China
 LATITUDE_RANGE = LATITUDE_RANGE_China
@@ -42,7 +43,7 @@ def match_fy3d_1km_fy4a_4km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_fy4a_4km_f
     # 获取数据1
     try:
         fy3d_1km = AodFy3d1km(aod_fy3d_1km_file, geo_file=geo_fy3d_1km_file)
-        data1 = fy3d_1km.get_aod()[1]
+        data1 = fy3d_1km.get_aod()
         lons1, lats1 = fy3d_1km.get_lon_lat()
     except Exception as why:
         print(why)
@@ -58,7 +59,17 @@ def match_fy3d_1km_fy4a_4km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_fy4a_4km_f
             lons1 = lons1[range_index1]
             lats1 = lats1[range_index1]
 
-    # 获取数据1
+    # 有效值过滤
+    range_index1 = np.logical_and(data1 > 0, data1 < 1.5)
+    if range_index1.sum() <= 0:
+        print('data1的有效数据不足')
+        return
+    else:
+        data1 = data1[range_index1]
+        lons1 = lons1[range_index1]
+        lats1 = lats1[range_index1]
+
+    # 获取数据2
     try:
         fy4a_4km = AodFy4a4km(aod_fy4a_4km_file)
         data2 = fy4a_4km.get_aod()
@@ -77,21 +88,33 @@ def match_fy3d_1km_fy4a_4km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_fy4a_4km_f
             lons2 = lons2[range_index2]
             lats2 = lats2[range_index2]
 
-    data_kdtree, lons_kdtree, lats_kdtree = data2, lons2, lats2
-    data_query, lons_query, lats_query = data1, lons1, lats1
+    # 有效值过滤
+    range_index2 = np.logical_and(data2 > 0, data2 < 1.5)
+    if range_index2.sum() <= 0:
+        print('data2的有效数据不足')
+        return
+    else:
+        data2 = data2[range_index2]
+        lons2 = lons2[range_index2]
+        lats2 = lats2[range_index2]
+
+    data_kdtree, lons_kdtree, lats_kdtree = data1, lons1, lats1
+    data_query, lons_query, lats_query = data2, lons2, lats2
 
     # 数据匹配
     verif = Verification(lons_kdtree, lats_kdtree, lons_query, lats_query)
-    kdtree_model_pickle = 'kdtree_model.pickle'
-    if os.path.isfile(kdtree_model_pickle):
-        with open(kdtree_model_pickle, 'rb') as fp:
-            verif.kdtree_model = pickle.load(fp)
-    else:
-        if not verif.get_kdtree():
-            return
-        else:
-            with open(kdtree_model_pickle, 'wb') as fp:
-                pickle.dump(verif.kdtree_model, fp)
+    if not verif.get_kdtree():
+        return
+    # kdtree_model_pickle = 'kdtree_model.pickle'
+    # if os.path.isfile(kdtree_model_pickle):
+    #     with open(kdtree_model_pickle, 'rb') as fp:
+    #         verif.kdtree_model = pickle.load(fp)
+    # else:
+    #     if not verif.get_kdtree():
+    #         return
+    #     else:
+    #         with open(kdtree_model_pickle, 'wb') as fp:
+    #             pickle.dump(verif.kdtree_model, fp)
 
     verif.get_dist_and_index_kdtree()
 
@@ -193,4 +216,6 @@ def t():
 
 if __name__ == '__main__':
     match_file()
-    # t()
+    """
+    
+    """
