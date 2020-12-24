@@ -25,7 +25,7 @@ def get_month(dt):
     return dt.strftime("%Y%m") + '01'
 
 
-def get_season_date(dt):
+def get_season(dt):
     m = dt.strftime("%m")
     if m in {'12', '01', '02'}:
         season = '12'
@@ -48,6 +48,14 @@ def get_year(dt):
     return dt.strftime("%Y") + '0101'
 
 
+def get_day_str(dt):
+    return dt.strftime("%Y%m%d")
+
+
+def get_month_str(dt):
+    return dt.strftime("%Y-%m")
+
+
 def get_season_str(dt):
     m = dt.strftime("%m")
     if m in {'12', '01', '02'}:
@@ -65,6 +73,10 @@ def get_season_str(dt):
     else:
         y = dt.strftime("%y")
     return y + '-' + season
+
+
+def get_year_str(dt):
+    return dt.strftime("%Y")
 
 
 def get_sum_count(aod_sum, aod_count, aod):
@@ -85,14 +97,6 @@ def get_mean(aod_sum, aod_count):
     return aod_mean
 
 
-def get_fy3d_geo_file_by_l1(l1_filename, geo_dir):
-    # FY3D_MERSI_ORBT_L2_AOD_MLT_NUL_20190916_0910_1000M_MS.HDF
-    namesplit = l1_filename.split('_')
-    geo_fy3d_name = 'FY3D_MERSI_GBAL_L1_{}_{}_GEO1K_MS.HDF'.format(namesplit[7], namesplit[8])
-    fy3d_geo_file = os.path.join(geo_dir, geo_fy3d_name)
-    return fy3d_geo_file
-
-
 def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
                            l1_dir=None, geo_dir=None, out_dir=None):
     # FY3D_MERSI_ORBT_L2_AOD_MLT_NUL_20190916_0910_1000M_MS.HDF
@@ -105,8 +109,9 @@ def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
                 continue
             date_str_file = name.split('_')[7]
             date_ = datetime.strptime(date_str_file, "%Y%m%d")
-            if not (datetime_start <= date_ <= datetime_end):
-                continue
+            if datetime_start is not None and datetime_end is not None:
+                if not (datetime_start <= date_ <= datetime_end):
+                    continue
             date_str = date_.strftime("%Y%m%d")
             file_dict[date_str].append(os.path.join(root, name))
 
@@ -127,9 +132,9 @@ def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
         filename_out = 'FY3D_MERSI_GBAL_L2_AOD_MLT_GLL_{}_POAD_1000M_MS.HDF'.format(d_)
 
         file_out = os.path.join(out_dir, filename_out)
-        # if os.path.isfile(file_out):
-        #     print('already exist {}'.format(file_out))
-        #     continue
+        if os.path.isfile(file_out):
+            print('already exist {}'.format(file_out))
+            continue
 
         print('<<< {}'.format(d_))
         for file_ in files:
@@ -199,12 +204,13 @@ def combine(frequency='Monthly', datetime_start=None, datetime_end=None,
                 continue
             date_str_file = name.split('_')[7]
             date_ = datetime.strptime(date_str_file, "%Y%m%d")
-            if not (datetime_start <= date_ <= datetime_end):
-                continue
+            if datetime_start is not None and datetime_end is not None:
+                if not (datetime_start <= date_ <= datetime_end):
+                    continue
             if frequency == 'Monthly':
                 date_str = get_month(date_)
             elif frequency == 'Seasonly':
-                date_str = get_season_date(date_)
+                date_str = get_season(date_)
             elif frequency == 'Yearly':
                 date_str = get_year(date_)
             else:
@@ -222,9 +228,9 @@ def combine(frequency='Monthly', datetime_start=None, datetime_end=None,
         res = res_dict[res_type]
         filename_out = '{}_GBAL_L2_AOD_MLT_GLL_{}_POAD_{}_MS.HDF'.format(satellite_sensor, d_, res)
         file_out = os.path.join(out_dir, filename_out)
-        # if os.path.isfile(file_out):
-        #     print('already exist {}'.format(file_out))
-        #     continue
+        if os.path.isfile(file_out):
+            print('already exist {}'.format(file_out))
+            continue
         for file_ in files:
             print('<<< {}'.format(file_))
             loader = data_loader(file_)
@@ -268,8 +274,9 @@ def combine_aqua_daily(datetime_start=None, datetime_end=None,
                 continue
             date_str_file = name[10:17]
             date_ = datetime.strptime(date_str_file, "%Y%j")
-            if not (datetime_start <= date_ <= datetime_end):
-                continue
+            if datetime_start is not None and datetime_end is not None:
+                if not (datetime_start <= date_ <= datetime_end):
+                    continue
             date_str = date_.strftime("%Y%m%d")
             file_dict[date_str].append(os.path.join(root, name))
 
@@ -290,9 +297,9 @@ def combine_aqua_daily(datetime_start=None, datetime_end=None,
         filename_out = 'AQUA_MODIS_GBAL_L2_AOD_MLT_GLL_{}_POAD_1000M_MS.HDF'.format(d_)
 
         file_out = os.path.join(out_dir, filename_out)
-        # if os.path.isfile(file_out):
-        #     print('already exist {}'.format(file_out))
-        #     continue
+        if os.path.isfile(file_out):
+            print('already exist {}'.format(file_out))
+            continue
 
         print('<<< {}'.format(d_))
         for file_ in files:
@@ -402,9 +409,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Schedule')
     parser.add_argument('--dataType', help='数据类型：FY3D_MERSI_1KM、FY3D_MERSI_5KM、AQUA_MODIS_3KM、AQUA_MODIS_5KM',
                         required=True)
-    parser.add_argument('--dateStart', help='开始时间（8位时间）：YYYYMMDD(20190101)', required=True)
-    parser.add_argument('--dateEnd', help='结束时间（8位时间）：YYYYMMDD(20190102)', required=True)
     parser.add_argument('--dateType', help='合成的类型日、月、季、年：Daily、Monthly、Seasonly、Yearly', required=True)
+    parser.add_argument('--dateStart', help='开始时间（8位时间）：YYYYMMDD(20190101)', required=False)
+    parser.add_argument('--dateEnd', help='结束时间（8位时间）：YYYYMMDD(20190102)', required=False)
     args = parser.parse_args()
 
     dataType = args.dataType
@@ -415,24 +422,56 @@ if __name__ == '__main__':
     main(data_type=dataType, date_start=dateStart, date_end=dateEnd, date_type=dateType)
 
     """
+    FY3D_MERSI_1KM 数据合成
+    程序目录：
+    输入数据
+        原始L1数据放在文件夹：“/DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/2FY3D_MERSI_L2_AOD-ORBT-1000M”
+        原始GEO数据放在文件夹：“/DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/2FY3D-MERSI-L1-GEO1K”
+    输出数据
+        合成的数据所在文件夹：“/DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/COMBINE”
+
     合成 FY3D_MERSI_1KM 日数据
-    python3 aod_h01_combine.py --dataType FY3D_MERSI_1KM --dateStart 20190101 --dateEnd 20190131 --combineType Daily
-
-    合成 AQUA_MODIS_3KM 日数据
-    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateStart 20190101 --dateEnd 20190131 --combineType Daily
-
-    合成 AQUA_MODIS_10KM 日数据
-    python3 aod_h01_combine.py --dataType AQUA_MODIS_10KM --dateStart 20190101 --dateEnd 20190131 --combineType Daily
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_1KM --dateType Daily --dateStart 20190101 --dateEnd 20190131
 
     合成 FY3D_MERSI_1KM 月数据
-    python3 aod_h01_combine.py --dataType FY3D_MERSI_1KM --dateStart 20190101 --dateEnd 20190131 --combineType Monthly
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_1KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
+
+    合成 FY3D_MERSI_1KM 季度数据
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_1KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    合成 FY3D_MERSI_1KM 年数据
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_1KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
+
+    合成 FY3D_MERSI_5KM 月数据
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_5KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
+
+    合成 FY3D_MERSI_5KM 季度数据
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_5KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    合成 FY3D_MERSI_5KM 年数据
+    python3 aod_h01_combine.py --dataType FY3D_MERSI_5KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
+
+    合成 AQUA_MODIS_3KM 日数据
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Daily --dateStart 20190101 --dateEnd 20190131
 
     合成 AQUA_MODIS_3KM 月数据
-    python3 aod_h01_combine.py --dataType FY3D_MERSI_5KM --dateStart 20190101 --dateEnd 20190131 --combineType Monthly
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
+
+    合成 AQUA_MODIS_3KM 季度数据
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    合成 AQUA_MODIS_3KM 年数据
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
+
+    合成 AQUA_MODIS_3KM 日数据
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Daily --dateStart 20190101 --dateEnd 20190131
 
     合成 AQUA_MODIS_3KM 月数据
-    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateStart 20190101 --dateEnd 20190131 --combineType Monthly
-    
-    合成 AQUA_MODIS_10KM 月数据
-    python3 aod_h01_combine.py --dataType AQUA_MODIS_10KM --dateStart 20190101 --dateEnd 20190131 --combineType Monthly
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
+
+    合成 AQUA_MODIS_3KM 季度数据
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    合成 AQUA_MODIS_3KM 年数据
+    python3 aod_h01_combine.py --dataType AQUA_MODIS_3KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
     """
