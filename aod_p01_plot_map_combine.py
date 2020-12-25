@@ -8,9 +8,9 @@ import argparse
 
 import numpy as np
 
-from lib.aod import AodFy3d5km, AodCombine
+from lib.aod import AodCombine
 
-from config import AOD_COMBINE_DIR, AOD_FY3D_5KM_DIR, AOD_PICTURE_DIR
+from config import AOD_COMBINE_DIR, AOD_PICTURE_DIR
 from aod_h01_combine import get_day_str, get_month_str, get_season_str, get_year_str
 from config import get_area_range, get_areas
 from aod_p02_plot_map_origin import plot_map_picture
@@ -106,12 +106,7 @@ def main(data_type=None, date_start=None, date_end=None, date_type=None):
             parser.print_help()
             raise ValueError(date_type)
     elif data_type == 'FY3D_MERSI_5KM':
-        if date_type in {'Daily'}:
-            data_dir = AOD_FY3D_5KM_DIR
-            out_dir = os.path.join(picture_dir, date_type)
-            plot_map(datetime_start, datetime_end, data_dir=data_dir, out_dir=out_dir, data_loader=AodFy3d5km,
-                     data_type=data_type, date_type=date_type)
-        elif date_type in {'Monthly', 'Seasonly', 'Yearly'}:
+        if date_type in {'Monthly', 'Seasonly', 'Yearly'}:
             data_dir = os.path.join(combine_dir, date_type)
             out_dir = os.path.join(picture_dir, date_type)
             plot_map(datetime_start, datetime_end, data_dir=data_dir, out_dir=out_dir,

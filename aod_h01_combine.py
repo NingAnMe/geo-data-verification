@@ -17,9 +17,11 @@ from lib.aod import AodFy3d1km, AodCombine, AodFy3d5km, AodModis
 from lib.hdf5 import write_hdf5_and_compress
 from lib.proj import ProjCore
 
-from config import AOD_FY3D_1KM_DIR, GEO_FY3D_1KM_DIR, AOD_COMBINE_DIR, AOD_FY3D_5KM_DIR, AOD_MODIS_3KM_DIR, AOD_MODIS_10KM_DIR
+from config import AOD_FY3D_1KM_DIR, GEO_FY3D_1KM_DIR, AOD_COMBINE_DIR, AOD_FY3D_5KM_DIR, AOD_MODIS_3KM_DIR, \
+    AOD_MODIS_10KM_DIR
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 
@@ -188,7 +190,7 @@ def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
 
 
 def combine(frequency='Monthly', datetime_start=None, datetime_end=None,
-            data_dir=None, out_dir=None, res_type='1KM', data_loader=AodCombine,
+            data_dir=None, out_dir=None, res_type='1KM', data_loader=None,
             satellite_sensor=None):
     print('frequency       ===  {}'.format(frequency))
     print('datetime_start  ===  {}'.format(datetime_start))
@@ -197,13 +199,16 @@ def combine(frequency='Monthly', datetime_start=None, datetime_end=None,
     print('out_dir         ===  {}'.format(out_dir))
     print('res_type        ===  {}'.format(res_type))
     print('satellite_sensor        ===  {}'.format(satellite_sensor))
+    if data_loader is None:
+        data_loader = AodCombine
+
     file_dict = defaultdict(list)
     for root, dirs, files in os.walk(data_dir):
         for name in files:
             if name[-3:].lower() != 'hdf':
                 continue
-            date_str_file = name.split('_')[7]
-            date_ = datetime.strptime(date_str_file, "%Y%m%d")
+            in_file = os.path.join(root, name)
+            date_ = data_loader(in_file).dt
             if datetime_start is not None and datetime_end is not None:
                 if not (datetime_start <= date_ <= datetime_end):
                     continue
@@ -215,7 +220,7 @@ def combine(frequency='Monthly', datetime_start=None, datetime_end=None,
                 date_str = get_year(date_)
             else:
                 raise ValueError(frequency)
-            file_dict[date_str].append(os.path.join(root, name))
+            file_dict[date_str].append(in_file)
     res_dict = {
         '1KM': '1000M',
         '5KM': '5000M',
@@ -373,12 +378,14 @@ def main(data_type=None, date_start=None, date_end=None, date_type=None):
         if date_type in {'Monthly', 'Seasonly', 'Yearly'}:
             out_dir = os.path.join(combine_dir, date_type)
             if date_type == 'Monthly':
-                data_loader = AodFy3d5km
+                dataLoader = AodFy3d5km
+                data_dir = AOD_FY3D_5KM_DIR
             else:
-                data_loader = None
+                dataLoader = None
+                data_dir = os.path.join(combine_dir, 'Monthly')
             combine(frequency=date_type, datetime_start=datetime_start, datetime_end=datetime_end,
-                    data_dir=AOD_FY3D_5KM_DIR, res_type='5KM', out_dir=out_dir, data_loader=data_loader,
-                    satellite_sensor='FY3D_MERSI')
+                    data_dir=data_dir, res_type='5KM', out_dir=out_dir,
+                    satellite_sensor='FY3D_MERSI', data_loader=dataLoader)
         else:
             parser.print_help()
             raise ValueError(date_type)
