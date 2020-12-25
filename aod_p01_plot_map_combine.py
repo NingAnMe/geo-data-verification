@@ -9,6 +9,8 @@ import argparse
 import numpy as np
 
 from lib.aod import AodCombine
+from lib.province_mask import get_province_mask
+from lib.proj_aod import proj_china
 
 from config import AOD_COMBINE_DIR, AOD_PICTURE_DIR
 from aod_h01_combine import get_day_str, get_month_str, get_season_str, get_year_str
@@ -50,6 +52,8 @@ def plot_map(datetime_start, datetime_end, data_dir=None, out_dir=None, data_loa
             data = loader.get_aod()
             lons, lats = loader.get_lon_lat()
 
+            data, lons, lats = proj_china(data, lons, lats)
+
             vmin = 0
             vmax = 1.5
 
@@ -63,11 +67,18 @@ def plot_map(datetime_start, datetime_end, data_dir=None, out_dir=None, data_loa
             mksize = 5
 
             areas = get_areas(area_type)
+            mask = get_province_mask(areas)
+
+            valid = np.logical_and.reduce((data > vmin, data < vmax, mask))
+
+            data_mask = data[valid]
+            lons_mask = lons[valid]
+            lats_mask = lats[valid]
 
             longitude_range, latitude_range = get_area_range(area_type)
             box = [latitude_range[1], latitude_range[0], longitude_range[0], longitude_range[1]]
 
-            plot_map_picture(data, lons, lats, title=title, vmin=vmin, vmax=vmax,
+            plot_map_picture(data_mask, lons_mask, lats_mask, title=title, vmin=vmin, vmax=vmax,
                              areas=areas, box=box, ticks=ticks, file_out=out_file,
                              mksize=mksize, nanhai=nanhai)
 
@@ -93,7 +104,7 @@ def main(data_type=None, date_start=None, date_end=None, date_type=None):
     datetime_end = datetime.strptime(date_end, "%Y%m%d")
 
     combine_dir = os.path.join(AOD_COMBINE_DIR, 'AOD_COMBINE_{}'.format(data_type))
-    picture_dir = os.path.join(AOD_PICTURE_DIR, 'AOD_MAP_{}'.format(data_type))
+    picture_dir = os.path.join(AOD_PICTURE_DIR, 'AOD_MAP_COMBINE_{}'.format(data_type))
 
     if data_type in {'FY3D_MERSI_1KM', 'AQUA_MODIS_3KM', 'AQUA_MODIS_10KM'}:
 

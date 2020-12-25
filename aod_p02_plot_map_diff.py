@@ -15,6 +15,7 @@ import numpy as np
 
 from lib.aod import AodCombine
 from lib.proj_aod import proj_china
+from lib.province_mask import get_province_mask
 
 from config import AOD_COMBINE_DIR, AOD_PICTURE_DIR
 from aod_h01_combine import get_day_str, get_month, get_season, get_year, get_month_str, get_season_str, get_year_str
@@ -89,13 +90,11 @@ def plot_map(datetime_start, datetime_end, data_dir_x=None, data_dir_y=None, out
 
             datax = loader_x.get_aod()
             lonsx, latsx = loader_x.get_lon_lat()
-            if 'FY3D_MERSI_5KM' == data_type_x:
-                datax, lonsx, latsx = proj_china(datax, lonsx, latsx)
+            datax, lonsx, latsx = proj_china(datax, lonsx, latsx)
 
             datay = loader_y.get_aod()
             lonsy, latsy = loader_y.get_lon_lat()
-            if 'FY3D_MERSI_5KM' == data_type_y:
-                datay, lonsy, latsy = proj_china(datay, lonsy, latsy)
+            datay, lonsy, latsy = proj_china(datay, lonsy, latsy)
 
             data = datax - datay  # 真实值 - 参考值
             lons = lonsx
@@ -114,11 +113,18 @@ def plot_map(datetime_start, datetime_end, data_dir_x=None, data_dir_y=None, out
             mksize = 5
 
             areas = get_areas(area_type)
+            mask = get_province_mask(areas)
+
+            valid = np.logical_and.reduce((data > vmin, data < vmax, mask))
+
+            data_mask = data[valid]
+            lons_mask = lons[valid]
+            lats_mask = lats[valid]
 
             longitude_range, latitude_range = get_area_range(area_type)
             box = [latitude_range[1], latitude_range[0], longitude_range[0], longitude_range[1]]
 
-            plot_map_picture(data, lons, lats, title=title, vmin=vmin, vmax=vmax,
+            plot_map_picture(data_mask, lons_mask, lats_mask, title=title, vmin=vmin, vmax=vmax,
                              areas=areas, box=box, ticks=ticks, file_out=out_file,
                              mksize=mksize, nanhai=nanhai)
 
@@ -166,9 +172,9 @@ def main(data_type_x=None, data_type_y=None, date_start=None, date_end=None, dat
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Schedule')
-    parser.add_argument('--dataTypeX', help='数据类型：FY3D_MERSI_1KM、FY3D_MERSI_5KM、AQUA_MODIS_3KM、AQUA_MODIS_5KM',
+    parser.add_argument('--dataTypeX', help='数据类型：FY3D_MERSI_1KM、FY3D_MERSI_5KM、AQUA_MODIS_3KM、AQUA_MODIS_10KM',
                         required=True)
-    parser.add_argument('--dataTypeY', help='数据类型：FY3D_MERSI_1KM、FY3D_MERSI_5KM、AQUA_MODIS_3KM、AQUA_MODIS_5KM',
+    parser.add_argument('--dataTypeY', help='数据类型：FY3D_MERSI_1KM、FY3D_MERSI_5KM、AQUA_MODIS_3KM、AQUA_MODIS_10KM',
                         required=True)
     parser.add_argument('--dateStart', help='开始时间（8位时间）：YYYYMMDD(20190101)', required=True)
     parser.add_argument('--dateEnd', help='结束时间（8位时间）：YYYYMMDD(20190102)', required=True)

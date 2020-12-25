@@ -22,7 +22,7 @@ from lib.verification import Verification
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d1km, AodModis
 from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
-from config import AOD_FY3D_1KM_DIR, AOD_MODIS_3KM_DIR, GEO_FY3D_1KM_DIR, AOD_FY3D_1KM_MODIS_3KM_DIR
+from config import AOD_FY3D_1KM_DIR, AOD_MODIS_3KM_DIR, GEO_FY3D_1KM_DIR, AOD_MATCH_DIR
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -140,6 +140,8 @@ def get_out_file(fy3d_file, modis_file, out_dir):
 
 
 def match_file():
+    print("<<< === {}".format(AOD_FY3D_1KM_DIR))
+    print("<<< === {}".format(AOD_MODIS_3KM_DIR))
     fy3d_file_dict = defaultdict(list)
     for root, dirs, files in os.walk(AOD_FY3D_1KM_DIR):
         for name in files:
@@ -175,7 +177,7 @@ def match_file():
                     if not (datetime_start <= datetime_modis <= datetime_end):
                         continue
 
-                    match_dir = os.path.join(AOD_FY3D_1KM_MODIS_3KM_DIR, 'MATCH')
+                    match_dir = os.path.join(AOD_MATCH_DIR, "FY3D_1KM_MODIS_3KM")
                     make_sure_path_exists(match_dir)
                     out_file = get_out_file(fy3d_file, modis_file, match_dir)
                     if os.path.isfile(out_file):

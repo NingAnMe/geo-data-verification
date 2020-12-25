@@ -21,7 +21,7 @@ import pandas as pd
 from lib.verification import Verification
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d5km, AodFy4a4km
-from config import *
+from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China, AOD_MATCH_DIR
 
 LONGITUDE_RANGE = LONGITUDE_RANGE_China
 LATITUDE_RANGE = LATITUDE_RANGE_China
@@ -127,7 +127,7 @@ def get_out_file(fy3d_file, fy4a_file, out_dir):
 def match_file():
     # FY3D_MERSI_GBAL_L2_AOD_MLT_GLL_20190102_POAD_5000M_MS.HDF
     fy3d_file_dict = defaultdict(list)
-    for root, dirs, files in os.walk(AOD_FY3D_1KM_DIR):
+    for root, dirs, files in os.walk(AOD_FY3D_5KM_DIR):
         for name in files:
             if name[-3:].lower() != 'hdf':
                 continue
@@ -161,14 +161,14 @@ def match_file():
                     if not (datetime_start <= datetime_fy4a <= datetime_end):
                         continue
 
-                    match_dir = os.path.join(AOD_FY3D_1KM_FY4A_4KM_DIR, 'MATCH')
+                    match_dir = os.path.join('MATCH', "FY3D_1KM_FY4A_4KM")
                     make_sure_path_exists(match_dir)
                     out_file = get_out_file(fy3d_file, fy4a_file, match_dir)
                     if os.path.isfile(out_file):
                         print('already exist {}'.format(out_file))
                         continue
                     geo_fy3d_name = 'FY3D_MERSI_GBAL_L1_{}_{}_GEO1K_MS.HDF'.format(ymdhm_fy3d[0], ymdhm_fy3d[1])
-                    fy3d_geo_file = os.path.join(GEO_FY3D_1KM_DIR, geo_fy3d_name)
+                    fy3d_geo_file = os.path.join(GEO_FY3D_5KM_DIR, geo_fy3d_name)
                     match_fy3d_5km_fy4a_4km(fy3d_file, fy3d_geo_file, fy4a_file, out_file,
                                             longitude_range=LONGITUDE_RANGE, latitude_range=LATITUDE_RANGE)
 

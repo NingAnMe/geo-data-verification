@@ -24,7 +24,7 @@ from lib.proj_aod import proj_china
 
 from aod_p02_plot_map_origin import plot_map_picture
 
-from config import AOD_PICTURE_DIR, AOD_FY3D_1KM_FY4A_4KM_DIR, AOD_FY3D_1KM_MODIS_3KM_DIR, AOD_FY3D_5KM_MODIS_10KM_DIR
+from config import AOD_MATCH_DIR, AOD_PICTURE_DIR
 from config import get_areas, get_area_range
 
 import warnings
@@ -38,7 +38,7 @@ def get_match_data(date_str_in, frequency='daily'):
     :param frequency: daily or monthly
     :return: pandas.DataFrame
     """
-    match_dir = os.path.join(RESULT_DIR, 'MATCH')
+    match_dir = os.path.join(AOD_MATCH_DIR, MATCH)
     print("<<< {}".format(match_dir))
     if frequency == 'all':
         filenames = os.listdir(match_dir)
@@ -125,7 +125,7 @@ def plot_verification_picture(date_str, date_end=None, frequency='daily'):
     elif frequency == 'seasonly':
         date_str = date_str[:6]
 
-    picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
+    picture_dir = os.path.join(AOD_PICTURE_DIR, "MATCH", MATCH)
     out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
     out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
     # if os.path.isfile(out_file):
@@ -219,7 +219,7 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
     elif frequency == 'seasonly':
         date_str = date_str[:6]
 
-    picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
+    picture_dir = os.path.join(AOD_PICTURE_DIR, 'MATCH', MATCH)
     out_dir = os.path.join(picture_dir, 'R_MAP', frequency)
     file_out = os.path.join(out_dir, 'r2_map_{}_{}_{}.png'.format(AREA, frequency, date_str))
     # if os.path.isfile(file_out):
@@ -348,7 +348,7 @@ def multi_plot_regression(date_start, date_end, frequency='daily'):
         else:
             break
     stats_data = pd.DataFrame(stats_data)
-    out_dir = os.path.join(RESULT_DIR, 'STATS')
+    out_dir = os.path.join(AOD_PICTURE_DIR, 'STATS', MATCH)
     make_sure_path_exists(out_dir)
     out_file = os.path.join(out_dir, '{}_{}_{}_{}.csv'.format(AREA, frequency, date_start, date_end))
     stats_data.to_csv(out_file, index=False)
@@ -375,7 +375,7 @@ def multi_plot_map(date_start, date_end, frequency='daily'):
 
 # ############################################## timeseries ############################################
 def get_stats_data(date_start, date_end, frequency='daily'):
-    stats_dir = os.path.join(RESULT_DIR, 'STATS')
+    stats_dir = os.path.join(AOD_PICTURE_DIR, 'STATS', MATCH)
     stats_file = os.path.join(stats_dir, '{}_{}_{}_{}.csv'.format(AREA, frequency, date_start, date_end))
     print('<<< {}'.format(stats_file))
     data_tmp = pd.read_csv(stats_file)
@@ -397,7 +397,7 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
     for i in data.date:
         x.append(datestr2datetime(i))
 
-    picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
+    picture_dir = os.path.join(AOD_PICTURE_DIR, 'MATCH', MATCH)
     out_dir = os.path.join(picture_dir, 'TIMESERIES')
 
     # ================================ plot BIAS
@@ -464,7 +464,7 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='help')
-    parser.add_argument('--matchType', '-m', help="匹配对：'AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM'", required=True)
+    parser.add_argument('--matchType', '-m', help="匹配对：'FY3D_1KM_MODIS_3KM', 'FY3D_5KM_MODIS_10KM', 'FY3D_1KM_FY4A_4KM'", required=True)
     parser.add_argument('--dateType', help='时间类型（日、月、季、年、全部）：Daily、Monthly、Seasonly、Yearly、 All', required=False)
     parser.add_argument('--plotType', help='绘图类型（回归图、R分布图、时间序列图）：regression、map、timeseries', required=True)
     parser.add_argument('--areaType', help='地区类型：China、YRD、PRD、FWP、BTH', required=True)
@@ -478,20 +478,17 @@ if __name__ == '__main__':
     plotType = args.plotType.lower()
     areaType = args.areaType
 
-    if MATCH == 'AOD_FY3D_5KM_MODIS_10KM':
-        RESULT_DIR = AOD_FY3D_5KM_MODIS_10KM_DIR
+    if MATCH == 'FY3D_5KM_MODIS_10KM':
         pair_x = 'FY3D MERSI'
         pair_y = 'AQUA MODIS'
         _date_start = "20190101"
         _date_end = "20200531"
-    elif MATCH == 'AOD_FY3D_1KM_MODIS_3KM':
-        RESULT_DIR = AOD_FY3D_1KM_MODIS_3KM_DIR
+    elif MATCH == 'FY3D_1KM_MODIS_3KM':
         pair_x = 'FY3D MERSI'
         pair_y = 'AQUA MODIS'
         _date_start = "20190101"
         _date_end = "20200531"
-    elif MATCH == 'AOD_FY3D_1KM_FY4A_4KM':
-        RESULT_DIR = AOD_FY3D_1KM_FY4A_4KM_DIR
+    elif MATCH == 'FY3D_1KM_FY4A_4KM':
         pair_x = 'FY3D MERSI'
         pair_y = 'FY4A AGRI'
         _date_start = "20190101"

@@ -14,7 +14,6 @@ import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from collections import defaultdict
-import pickle
 import numpy as np
 import pandas as pd
 
@@ -22,7 +21,7 @@ from lib.verification import Verification
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d1km, AodFy4a4km
 from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
-from config import AOD_FY3D_1KM_DIR, AOD_FY4A_4KM_DIR, GEO_FY3D_1KM_DIR, AOD_FY3D_1KM_FY4A_4KM_DIR
+from config import AOD_FY3D_1KM_DIR, AOD_FY4A_4KM_DIR, GEO_FY3D_1KM_DIR, AOD_MATCH_DIR
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -192,7 +191,7 @@ def match_file():
                     if not (datetime_start <= datetime_fy4a <= datetime_end):
                         continue
 
-                    match_dir = os.path.join(AOD_FY3D_1KM_FY4A_4KM_DIR, 'MATCH')
+                    match_dir = os.path.join(AOD_MATCH_DIR, "FY3D_1KM_FY4A_4KM")
                     make_sure_path_exists(match_dir)
                     out_file = get_out_file(fy3d_file, fy4a_file, match_dir)
                     if os.path.isfile(out_file):

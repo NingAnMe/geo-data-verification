@@ -128,7 +128,7 @@ def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
     res_degree = 0.01  # 分辨率，1km
     projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 54.995),
-                    pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
+                    pt_br=(139.995, 9.995))  # 角点也要放在格点中心位置
 
     for d_, files in file_dict.items():
         aod_sum = np.zeros((proj.row, proj.col), dtype=np.float)
@@ -145,7 +145,7 @@ def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
             print('<<< {}'.format(file_))
 
             file_loader = AodFy3d1km(file_, geo_path=geo_dir)
-            aod = file_loader.get_aod()[1]
+            aod = file_loader.get_aod()
             lons, lats = file_loader.get_lon_lat()
             print(np.nanmin(aod), np.nanmax(aod), np.nanmean(aod))
             if aod is None:
@@ -294,7 +294,7 @@ def combine_aqua_daily(datetime_start=None, datetime_end=None,
     res_degree = 0.01  # 分辨率，1km
     projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 54.995),
-                    pt_br=(139.995, 14.995))  # 角点也要放在格点中心位置
+                    pt_br=(139.995, 9.995))  # 角点也要放在格点中心位置
 
     for d_, files in file_dict.items():
         aod_sum = np.zeros((proj.row, proj.col), dtype=np.float)
