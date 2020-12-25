@@ -19,6 +19,9 @@ from lib.province_mask import get_province_mask
 
 from config import get_areas, get_area_range
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 def plot_map_picture(value, longitude, latitude, title='', vmin=-np.inf, vmax=np.inf, areas=None, box=None, ticks=None,
                      file_out=None, ptype='pcolormesh', mksize=5, nanhai=False):
@@ -229,7 +232,7 @@ if __name__ == '__main__':
     python3 aod_p02_plot_map_origin.py --dataType AQUA_MODIS_3KM --inPath /DISK/DATA02/KTS/SourceData/AQUA/MODIS/MYD04_3K/ORBIT/2019 --outPath /DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/test
     
     单个绘制 AQUA_MODIS_10KM 分布图（输入为单个文件）
-    
+    python3 aod_p02_plot_map_origin.py --dataType AQUA_MODIS_3KM --inPath /DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/3MYD04_L2_MODIS_AOD_10KM/2019/MYD04_L2.A2019001.0420.061.2019001165304.hdf --outPath /DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/test
     批量绘制 AQUA_MODIS_10KM 分布图（输入为文件夹）
     python3 aod_p02_plot_map_origin.py --dataType AQUA_MODIS_3KM --inPath /DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/3MYD04_L2_MODIS_AOD_10KM/2019 --outPath /DISK/DATA02/PROJECT/SourceData/ShangHai/AOD/test
     """
