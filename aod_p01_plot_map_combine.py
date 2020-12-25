@@ -7,118 +7,16 @@ from datetime import datetime
 import argparse
 
 import numpy as np
-import matplotlib.pyplot as plt
-from pylab import subplots_adjust
-
-from DV.dv_map import dv_map
 
 from lib.aod import AodFy3d5km, AodCombine
 
 from config import AOD_COMBINE_DIR, AOD_FY3D_5KM_DIR, AOD_PICTURE_DIR
 from aod_h01_combine import get_day_str, get_month_str, get_season_str, get_year_str
 from config import get_area_range, get_areas
+from aod_p02_plot_map_origin import plot_map_picture
 
-
-def plot_map_picture(data, lons, lats, title='', vmin=-np.inf, vmax=np.inf, areas=None, box=None, ticks=None,
-                     file_out=None, ptype='pcolormesh', mksize=5, nanhai=False):
-    if file_out is None:
-        print('没有指定输出文件：file_out is None')
-        return
-
-    latitude = lats
-    longitude = lons
-    value = data
-    out_file = file_out
-    if vmin is not None and vmax is not None:
-        valid = np.logical_and(value > vmin, value < vmax)
-        value[~valid] = np.nan
-    else:
-        value[value == 0] = np.nan
-        vmin = np.nanmin(value)
-        vmax = np.nanmax(value)
-
-    print(np.nanmin(data), np.nanmax(data), np.nanmean(data))
-
-    # 开始画图-----------------------
-
-    fig = plt.figure(figsize=(9, 8))  # 图像大小
-
-    p = dv_map(fig=fig)
-
-    subplots_adjust(left=0.07, right=0.98, top=0.90, bottom=0.15)
-    p.show_colorbar = False
-    p.show_countries = False
-    p.show_coastlines = False
-    # p.show_line_of_latlon = False
-    # p.show_china = True
-    if nanhai:
-        p.nanhai_loc = [0.83, 0.25, 0.15, 0.17]
-        p.nanhai_minimap()
-    p.show_china_province = True
-    p.show_inside_china = True
-    p.show_inside_china_mini = True
-
-    if box:
-        if abs(box[1] - box[0]) < 10:
-            p.delat = 2
-        else:
-            p.delat = 5
-        if abs(box[2] - box[3]) < 10:
-            p.delon = 2
-        elif abs(box[2] - box[3]) < 40:
-            p.delon = 5
-        else:
-            p.delon = 10
-    # else:
-    #     p.delat = 2  # 纬度刻度线分辨率
-    #     p.delon = 2  # 经度刻度线分辨率
-    p.color_coast = "#3a3a3a"  # 海岸线颜色
-    p.color_contry = "#3a3a3a"  # 国家颜色
-    p.fontsize_tick = 15
-
-    # set color map
-    p.valmin = vmin
-    p.valmax = vmax
-    p.colormap = plt.get_cmap('jet')  # mpl.cm.rainbow, summer, jet, bwr
-    # p.colorbar_extend = "max"
-
-    # plot
-    p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax, box=box, markersize=mksize, ptype=ptype)
-
-    if areas is not None and len(areas) > 0:
-        print('设置地区 ：{}'.format(areas))
-        # aeres = ["江苏省", "安徽省", "浙江省", "上海市"]
-        for aere in areas:
-            p.city_boundary(aere, linewidth=1.2, shape_name='中国省级行政区')
-        p.set_area(areas)
-
-    # 色标 ---------------------------
-    cb_loc = [0.12, 0.07, 0.76, 0.03]
-    # unit = r"$\mathregular{(10^{15}\/\/molec/cm^2)}$"
-    fontsize = 16
-    # p.add_custom_colorbar(cb_loc, p.valmin, p.valmax,
-    #                       fmt="%d",
-    #                       unit="(1E16 molec/cm^2)",
-    #                       fontsize=fontsize)
-    c_ax = fig.add_axes(cb_loc)
-    # cbar = fig.colorbar(p.cs, cax=c_ax, ticks=np.arange(0, 1.6, 0.3), orientation='horizontal')
-    fig.colorbar(p.cs, cax=c_ax, ticks=ticks, orientation='horizontal')
-    for l in c_ax.xaxis.get_ticklabels():
-        l.set_fontproperties(p.font_mid)
-        l.set_fontsize(fontsize)
-        l.set_color(p.color_ticker)
-    # cbar写单位
-    # cbar.ax.set_title(unit, x=1.0382, y=0, color=p.color_ticker,
-    #                   ha='left', va='center',
-    #                   fontproperties=p.font_mid, fontsize=fontsize)
-
-    # 标题 ---------------------------
-    p.w_title = p.suptitle(title, fontsize=14, y=0.97)
-
-    # save
-    p.savefig(out_file, dpi=300)
-    print(">>> {}".format(out_file))
-    p.clean()
+import warnings
+warnings.filterwarnings('ignore')
 
 
 def plot_map(datetime_start, datetime_end, data_dir=None, out_dir=None, data_loader=AodCombine,
@@ -243,24 +141,48 @@ if __name__ == '__main__':
     main(data_type=dataType, date_start=dateStart, date_end=dateEnd, date_type=dateType)
 
     """
-    绘制 FY3D_MERSI_1KM 日数据的分布图
-    python3 aod_p01_plot_map.py --dataType FY3D_MERSI_1KM --dateStart 20190101 --dateEnd 20190131 --dateType Daily
+    绘制 FY3D_MERSI_1KM 日分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_1KM --dateType Daily --dateStart 20190101 --dateEnd 20190131
 
-    绘制 AQUA_MODIS_3KM 日数据的分布图
-    python3 aod_p01_plot_map.py --dataType AQUA_MODIS_3KM --dateStart 20190101 --dateEnd 20190131 --dateType Daily
+    绘制 FY3D_MERSI_1KM 月分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_1KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
 
-    绘制 AQUA_MODIS_10KM 日数据的分布图
-    python3 aod_p01_plot_map.py --dataType AQUA_MODIS_10KM --dateStart 20190101 --dateEnd 20190131 --dateType Daily
+    绘制 FY3D_MERSI_1KM 季度分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_1KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
 
-    绘制 FY3D_MERSI_1KM 月数据的分布图
-    python3 aod_p01_plot_map.py --dataType FY3D_MERSI_1KM --dateStart 20190101 --dateEnd 20190131 --dateType Monthly
+    绘制 FY3D_MERSI_1KM 年分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_1KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
 
-    绘制 AQUA_MODIS_3KM 月数据的分布图
-    python3 aod_p01_plot_map.py --dataType FY3D_MERSI_5KM --dateStart 20190101 --dateEnd 20190131 --dateType Monthly
+    绘制 FY3D_MERSI_5KM 月分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_5KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
 
-    绘制 AQUA_MODIS_3KM 月数据的分布图
-    python3 aod_p01_plot_map.py --dataType AQUA_MODIS_3KM --dateStart 20190101 --dateEnd 20190131 --dateType Monthly
-    
-    绘制 AQUA_MODIS_10KM 月数据的分布图
-    python3 aod_p01_plot_map.py --dataType AQUA_MODIS_10KM --dateStart 20190101 --dateEnd 20190131 --dateType Monthly
+    绘制 FY3D_MERSI_5KM 季度分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_5KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    绘制 FY3D_MERSI_5KM 年分布图
+    python3 aod_p01_plot_map_combine.py --dataType FY3D_MERSI_5KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
+
+    绘制 AQUA_MODIS_3KM 日分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Daily --dateStart 20190101 --dateEnd 20190131
+
+    绘制 AQUA_MODIS_3KM 月分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
+
+    绘制 AQUA_MODIS_3KM 季度分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    绘制 AQUA_MODIS_3KM 年分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
+
+    绘制 AQUA_MODIS_3KM 日分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Daily --dateStart 20190101 --dateEnd 20190131
+
+    绘制 AQUA_MODIS_3KM 月分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Monthly --dateStart 20190101 --dateEnd 20190131
+
+    绘制 AQUA_MODIS_3KM 季度分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Seasonly --dateStart 20190101 --dateEnd 20190228
+
+    绘制 AQUA_MODIS_3KM 年分布图
+    python3 aod_p01_plot_map_combine.py --dataType AQUA_MODIS_3KM --dateType Yearly --dateStart 20190101 --dateEnd 20191231
     """
