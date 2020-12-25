@@ -24,6 +24,9 @@ from lib.aod import AodFy3d1km, AodModis
 from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
 from config import AOD_FY3D_1KM_DIR, AOD_MODIS_3KM_DIR, GEO_FY3D_1KM_DIR, AOD_FY3D_1KM_MODIS_3KM_DIR
 
+import warnings
+warnings.filterwarnings('ignore')
+
 LONGITUDE_RANGE = LONGITUDE_RANGE_China
 LATITUDE_RANGE = LATITUDE_RANGE_China
 
@@ -104,7 +107,7 @@ def match_fy3d_1km_modis_3km(aod_fy3d_1km_file, geo_fy3d_1km_file, aod_modis_3km
     verif.get_dist_and_index_kdtree()
 
     # 获取符合距离阈值的点
-    pre_dist = 0.02
+    pre_dist = 0.009
     index_dist = verif.get_index_dist(pre_dist=pre_dist)
 
     # 匹配数据

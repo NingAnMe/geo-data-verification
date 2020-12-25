@@ -24,6 +24,9 @@ from lib.aod import AodFy3d1km, AodFy4a4km
 from config import LONGITUDE_RANGE_China, LATITUDE_RANGE_China
 from config import AOD_FY3D_1KM_DIR, AOD_FY4A_4KM_DIR, GEO_FY3D_1KM_DIR, AOD_FY3D_1KM_FY4A_4KM_DIR
 
+import warnings
+warnings.filterwarnings('ignore')
+
 LONGITUDE_RANGE = LONGITUDE_RANGE_China
 LATITUDE_RANGE = LATITUDE_RANGE_China
 
