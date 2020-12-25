@@ -16,24 +16,19 @@ import numpy as np
 from scipy import stats
 
 from lib.plot_stats import plot_regression, plot_timeseries, plot_histogram
-from lib.plot_map import plot_shanghai
 from lib.scical import rmse
 from lib.path import make_sure_path_exists
 from lib.proj import ProjCore, meter2degree
+from lib.province_mask import get_province_mask
+from lib.proj_aod import proj_china
 
-from config import *
+from aod_p02_plot_map_origin import plot_map_picture
 
+from config import AOD_PICTURE_DIR, AOD_FY3D_1KM_FY4A_4KM_DIR, AOD_FY3D_1KM_MODIS_3KM_DIR, AOD_FY3D_5KM_MODIS_10KM_DIR
+from config import get_areas, get_area_range
 
-def get_season(ym):
-    season = {
-        '201812': '2018 DJF',
-        '201903': '2019 MAM',
-        '201906': '2019 JJA',
-        '201909': '2019 SON',
-        '201912': '2019 DJF',
-        '202003': '2020 MAM',
-    }
-    return season[ym]
+import warnings
+warnings.filterwarnings('ignore')
 
 
 def get_match_data(date_str_in, frequency='daily'):
@@ -104,6 +99,25 @@ def get_match_data(date_str_in, frequency='daily'):
     return data
 
 
+def get_season(ym):
+    season = {
+        '201812': '2018 DJF',
+        '201903': '2019 MAM',
+        '201906': '2019 JJA',
+        '201909': '2019 SON',
+        '201912': '2019 DJF',
+        '202003': '2020 MAM',
+        '202006': '2020 JJA',
+        '202009': '2020 SON',
+        '202012': '2020 DJF',
+        '202103': '2021 MAM',
+        '202106': '2021 JJA',
+        '202109': '2021 SON',
+        '202112': '2021 DJF',
+    }
+    return season[ym]
+
+
 def plot_verification_picture(date_str, date_end=None, frequency='daily'):
     # 获取数据
     if frequency == 'monthly':
@@ -112,12 +126,8 @@ def plot_verification_picture(date_str, date_end=None, frequency='daily'):
         date_str = date_str[:6]
 
     picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
-    if frequency == 'all':
-        out_dir = os.path.join(picture_dir, 'TIMESERIES')
-        out_file = os.path.join(out_dir, 'regression_{}_{}_{}_{}.png'.format(AREA, frequency, _date_start, _date_end))
-    else:
-        out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
-        out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
+    out_dir = os.path.join(picture_dir, 'REGRESSION', frequency)
+    out_file = os.path.join(out_dir, 'regression_{}_{}_{}.png'.format(AREA, frequency, date_str))
     # if os.path.isfile(out_file):
     #     print('already exist {}'.format(out_file))
     #     return
@@ -210,7 +220,7 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
         date_str = date_str[:6]
 
     picture_dir = os.path.join(AOD_PICTURE_DIR, 'STAT', MATCH)
-    out_dir = os.path.join(picture_dir, 'TIMESERIES')
+    out_dir = os.path.join(picture_dir, 'R_MAP', frequency)
     file_out = os.path.join(out_dir, 'r2_map_{}_{}_{}.png'.format(AREA, frequency, date_str))
     # if os.path.isfile(file_out):
     #     print('already exist {}'.format(file_out))
@@ -259,7 +269,6 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
     r2_plot = list()
     r2_grid = np.full_like(lats_grid, np.nan, dtype=np.float)
     for (i, j), aod_x_y in data_dict.items():
-        print(aod_x_y)
         xs = list()
         ys = list()
         for x, y in aod_x_y:
@@ -277,12 +286,6 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
         print('没有数据： {}'.format(file_out))
         return
 
-    if LONGITUDE_RANGE is not None:
-        box = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0],
-               LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（大），南（小），西（小），东（大）
-    else:
-        box = None
-
     if frequency == 'seasonly':
         season = get_season(date_str)
         title = '{} R over {}'.format(season, AREA)
@@ -292,12 +295,35 @@ def plot_verification_picture_map(date_str, date_end=None, frequency='daily'):
         title = "{} R over {}".format(date_str, AREA)
     vmin = 0
     vmax = 1
-    markersize = 20
-    # lats_plot = np.array(lats_plot)
-    # lons_plot = np.array(lons_plot)
-    # r2_plot = np.array(r2_plot)
-    plot_shanghai(lats_grid, lons_grid, r2_grid, file_out,
-                  box=box, title=title, vmin=vmin, vmax=vmax, markersize=markersize)
+
+    ticks = np.arange(0, 1.1, 0.2)
+    if AREA == 'China':
+        mksize = 10
+        nanhai = True
+    else:
+        mksize = 20
+        nanhai = False
+
+    data, lons, lats = proj_china(r2_grid, lons_grid, lats_grid, data_min=0, data_max=1)
+
+    areas = get_areas(AREA)
+    mask = get_province_mask(areas)
+
+    valid = np.logical_and.reduce((data > vmin, data < vmax, mask))
+
+    data_mask = data[valid]
+    lons_mask = lons[valid]
+    lats_mask = lats[valid]
+
+    count = len(data_mask)
+    print('count == {}'.format(count))
+
+    box = [LATITUDE_RANGE[1], LATITUDE_RANGE[0], LONGITUDE_RANGE[0],
+           LONGITUDE_RANGE[1]]  # nlat, slat, wlon, elon:北（大），南（小），西（小），东（大）
+
+    plot_map_picture(data_mask, lons_mask, lats_mask, title=title, vmin=vmin, vmax=vmax,
+                     areas=areas, box=box, ticks=ticks, file_out=file_out,
+                     mksize=mksize, nanhai=nanhai)
 
 
 def multi_plot_regression(date_start, date_end, frequency='daily'):
@@ -317,6 +343,8 @@ def multi_plot_regression(date_start, date_end, frequency='daily'):
             datetime_start = datetime_start + relativedelta(months=1)
         elif frequency == 'seasonly':
             datetime_start = datetime_start + relativedelta(months=3)
+        elif frequency == 'yearly':
+            datetime_start = datetime_start + relativedelta(years=1)
         else:
             break
     stats_data = pd.DataFrame(stats_data)
@@ -339,6 +367,8 @@ def multi_plot_map(date_start, date_end, frequency='daily'):
             datetime_start = datetime_start + relativedelta(months=1)
         elif frequency == 'seasonly':
             datetime_start = datetime_start + relativedelta(months=3)
+        elif frequency == 'yearly':
+            datetime_start = datetime_start + relativedelta(years=1)
         else:
             break
 
@@ -433,74 +463,76 @@ def plot_timeseries_picture(date_start, date_end, frequency='daily'):
 
 
 if __name__ == '__main__':
-    # MATCH = 'AOD_FY3D_1KM_MODIS_3KM'
-    # MATCH = 'AOD_FY3D_5KM_MODIS_10KM'
-    # MATCH = 'AOD_FY3D_1KM_FY4A_4KM'
     parser = argparse.ArgumentParser(description='help')
-    parser.add_argument('--match', '-m', help='', required=False)
+    parser.add_argument('--matchType', '-m', help="匹配对：'AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM'", required=True)
+    parser.add_argument('--dateType', help='时间类型（日、月、季、年、全部）：Daily、Monthly、Seasonly、Yearly、 All', required=False)
+    parser.add_argument('--plotType', help='绘图类型（回归图、R分布图、时间序列图）：regression、map、timeseries', required=True)
+    parser.add_argument('--areaType', help='地区类型：China、YRD、PRD、FWP、BTH', required=True)
     args = parser.parse_args()
 
-    if args.match is not None:
-        MATCHES = [args.match]
+    MATCH = args.matchType
+    if args.dateType is not None:
+        dateType = args.dateType.lower()
     else:
-        MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM', 'AOD_FY3D_1KM_FY4A_4KM']
-        # MATCHES = ['AOD_FY3D_1KM_MODIS_3KM', 'AOD_FY3D_5KM_MODIS_10KM']
-        # MATCHES = ['AOD_FY3D_1KM_FY4A_4KM']
+        dateType = None
+    plotType = args.plotType.lower()
+    areaType = args.areaType
 
-    for MATCH in MATCHES:
+    if MATCH == 'AOD_FY3D_5KM_MODIS_10KM':
+        RESULT_DIR = AOD_FY3D_5KM_MODIS_10KM_DIR
+        pair_x = 'FY3D MERSI'
+        pair_y = 'AQUA MODIS'
+        _date_start = "20190101"
+        _date_end = "20200531"
+    elif MATCH == 'AOD_FY3D_1KM_MODIS_3KM':
+        RESULT_DIR = AOD_FY3D_1KM_MODIS_3KM_DIR
+        pair_x = 'FY3D MERSI'
+        pair_y = 'AQUA MODIS'
+        _date_start = "20190101"
+        _date_end = "20200531"
+    elif MATCH == 'AOD_FY3D_1KM_FY4A_4KM':
+        RESULT_DIR = AOD_FY3D_1KM_FY4A_4KM_DIR
+        pair_x = 'FY3D MERSI'
+        pair_y = 'FY4A AGRI'
+        _date_start = "20190101"
+        _date_end = "20191231"
+    else:
+        raise ValueError(MATCH)
 
-        if MATCH == 'AOD_FY3D_5KM_MODIS_10KM':
-            RESULT_DIR = AOD_FY3D_5KM_MODIS_10KM_DIR
-            pair_x = 'FY3D MERSI'
-            pair_y = 'AQUA MODIS'
-            _date_start = "20190101"
-            _date_end = "20200531"
-        elif MATCH == 'AOD_FY3D_1KM_MODIS_3KM':
-            RESULT_DIR = AOD_FY3D_1KM_MODIS_3KM_DIR
-            pair_x = 'FY3D MERSI'
-            pair_y = 'AQUA MODIS'
-            _date_start = "20190101"
-            _date_end = "20200531"
-        elif MATCH == 'AOD_FY3D_1KM_FY4A_4KM':
-            RESULT_DIR = AOD_FY3D_1KM_FY4A_4KM_DIR
-            pair_x = 'FY3D MERSI'
-            pair_y = 'FY4A AGRI'
-            _date_start = "20190101"
-            _date_end = "20191231"
-        else:
-            _date_start = "20190101"
-            _date_end = "20200531"
+    AREAs = ['China', 'YRD', 'PRD', 'FWP', 'BTH']
 
-        AREAs = ['YRD', 'PRD', 'FWP', 'BTH']
+    if areaType is not None:
+        assert areaType in AREAs
+        AREAs = [areaType]
 
-        for AREA in AREAs:
+    for AREA in AREAs:
+        LONGITUDE_RANGE, LATITUDE_RANGE = get_area_range(AREA)
 
-            if AREA == 'China':
-                LONGITUDE_RANGE = LONGITUDE_RANGE_China
-                LATITUDE_RANGE = LATITUDE_RANGE_China
-            elif AREA == 'YRD':
-                LONGITUDE_RANGE = LONGITUDE_RANGE_ChangSanJiao
-                LATITUDE_RANGE = LATITUDE_RANGE_ChangSanJiao
-            elif AREA == 'PRD':
-                LONGITUDE_RANGE = LONGITUDE_RANGE_ZhuSanJiao
-                LATITUDE_RANGE = LATITUDE_RANGE_ZhuSanJiao
-            elif AREA == 'FWP':
-                LONGITUDE_RANGE = LONGITUDE_RANGE_FenWei
-                LATITUDE_RANGE = LATITUDE_RANGE_FenWei
-            elif AREA == 'BTH':
-                LONGITUDE_RANGE = LONGITUDE_RANGE_JingJinJi
-                LATITUDE_RANGE = LATITUDE_RANGE_JingJinJi
+        if plotType == 'regression':
+            if dateType == 'daily':
+                multi_plot_regression(_date_start, _date_end, 'daily')
+            elif dateType == 'monthly':
+                multi_plot_regression(_date_start, _date_end, 'monthly')
+            elif dateType == 'seasonly':
+                multi_plot_regression('20181201', _date_end, 'seasonly')
+            elif dateType == 'yearly':
+                multi_plot_regression(_date_start, _date_end, 'yearly')
+            elif dateType == 'all':
+                multi_plot_regression(_date_start, _date_end, 'all')
             else:
-                LONGITUDE_RANGE = None
-                LATITUDE_RANGE = None
-
-            # multi_plot_regression(_date_start, _date_end, 'daily')
-            plot_timeseries_picture(_date_start, _date_end, 'daily')  # 重新跑一遍，用户改为对齐
-            # multi_plot_regression(_date_start, _date_end, 'monthly')
-            # multi_plot_regression('20181201', _date_end, 'seasonly')
-
-            # multi_plot_map(_date_start, _date_end, 'monthly')
-            # multi_plot_map('20181201', _date_end, 'seasonly')
-            # multi_plot_map(_date_start, _date_end, 'all')
-
-            # multi_plot_regression(_date_start, _date_end, 'all')
+                raise ValueError(dateType)
+        elif plotType == 'map':
+            if dateType == 'monthly':
+                multi_plot_map(_date_start, _date_end, 'monthly')
+            elif dateType == 'seasonly':
+                multi_plot_map('20181201', _date_end, 'seasonly')
+            elif dateType == 'yearly':
+                multi_plot_map(_date_start, _date_end, 'yearly')
+            elif dateType == 'all':
+                multi_plot_map(_date_start, _date_end, 'all')
+            else:
+                raise ValueError(dateType)
+        elif plotType == 'timeseries':
+            plot_timeseries_picture(_date_start, _date_end, 'daily')
+        else:
+            raise ValueError(plotType)
