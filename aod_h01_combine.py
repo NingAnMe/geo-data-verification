@@ -10,15 +10,17 @@ import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from collections import defaultdict
-from scipy.interpolate import griddata
 import numpy as np
 
 from lib.path import make_sure_path_exists
 from lib.aod import AodFy3d1km, AodCombine, AodFy3d5km, AodModis
-from lib.hdf5 import write_hdf5_and_compress, get_hdf5_data
-from lib.proj import ProjCore, meter2degree
+from lib.hdf5 import write_hdf5_and_compress
+from lib.proj import ProjCore
 
 from config import AOD_FY3D_1KM_DIR, GEO_FY3D_1KM_DIR, AOD_COMBINE_DIR, AOD_FY3D_5KM_DIR, AOD_MODIS_3KM_DIR, AOD_MODIS_10KM_DIR
+
+import warnings
+warnings.filterwarnings('ignore')
 
 
 def get_month(dt):
@@ -140,9 +142,7 @@ def combine_fy3d_1km_daily(datetime_start=None, datetime_end=None,
         for file_ in files:
             print('<<< {}'.format(file_))
 
-            file_name = os.path.basename(file_)
-            geo_file = get_fy3d_geo_file_by_l1(file_name, geo_dir)
-            file_loader = AodFy3d1km(file_, geo_file=geo_file)
+            file_loader = AodFy3d1km(file_, geo_path=geo_dir)
             aod = file_loader.get_aod()[1]
             lons, lats = file_loader.get_lon_lat()
             print(np.nanmin(aod), np.nanmax(aod), np.nanmean(aod))
